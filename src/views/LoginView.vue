@@ -164,7 +164,6 @@ export default {
     background-color: rgb(213, 147, 197);
     height: 450px;
     width: 600px;
-    padding-top: -50px;
     margin-left: 10px;
     margin-right: 10px;
     border-radius: 10px;
@@ -231,6 +230,10 @@ export default {
 
 .forgetpas__router:hover{
     color: rgb(208, 208, 208);
+}
+
+.login__form2{
+    width: 455px;
 }
 
 @media (max-width: 1000px){

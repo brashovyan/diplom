@@ -1,51 +1,77 @@
 <template>
     <div class="main">
         <div class="main__elements">
-            <input type="email" v-model="email" placeholder="Почта">
-            <input type="password" v-model="password1" placeholder="Пароль">
-            <input type="password" v-model="password2" placeholder="Повторите пароль">
-            <p>Заполните ифнормацию о себе (это нужно для составления меню, мы никому ничего не скажем)</p>
-            <p>(Это нужно для составления меню, мы никому ничего не скажем)</p>
-            <input type="number" v-model="height" placeholder="Рост, см">
-            <input type="number" v-model="weight" placeholder="Вес, кг">
-            <input type="date" v-model="date" placeholder="Дата рождения">
-            <div>
-                <input type="radio" v-model="sex" name="sex" placeholder="Мужской" value="M" id="male" checked>
-                <label for="male">Мужской</label>
-                <input type="radio" v-model="sex" name="sex" placeholder="Женский" value="F" id="female">
-                <label for="female">Женский</label>
+            <div class="main__elements2">
+                <p class="reg">Регистрация</p>
+                <div class="div__input">
+                    <p class="p__placeholder">Эл. почта:</p>
+                    <input v-model="email" type="email" class="email" placeholder="Эл. почта" required>
+                </div>
+                <div class="div__input">
+                    <p class="p__placeholder">Пароль:</p>
+                    <input v-model="password1" type="password" class="email" placeholder="Пароль" required>
+                </div>
+                <div class="div__input">
+                    <p class="p__placeholder">Повторите пароль:</p>
+                    <input v-model="password2" type="password" class="email" placeholder="Повторите пароль" required>
+                </div>
+                <p class="info">Заполните ниже ифнормацию о себе (это нужно для составления меню, мы никому ничего не скажем😉)</p>
+                <div class="div__input">
+                    <p class="p__placeholder">Рост, см:</p>
+                    <input v-model="height" type="number" class="email" placeholder="Рост, см" required>
+                </div>
+                <div class="div__input">
+                    <p class="p__placeholder">Вес, кг:</p>
+                    <input v-model="weight" type="number" class="email" placeholder="Вес, кг" required>
+                </div>
+                <div class="div__input">
+                    <p class="p__placeholder">Дата рождения:</p>
+                    <input v-model="date" type="date" class="email" placeholder="Дата рождения" required>
+                </div>
+                <p class="p__placeholder">Пол:</p>
+                <div class="div__radio">
+                    <input type="radio" v-model="sex" name="sex" placeholder="Мужской" value="M" id="male" checked>
+                    <label for="male">Мужской</label>
+                    <input type="radio" v-model="sex" name="sex" placeholder="Женский" value="F" id="female">
+                    <label for="female">Женский</label>
+                </div>
+                <p class="p__placeholder">Выберите фото профиля (необязательно):</p>
+                <div class="div__photo">
+                    <label for="file" class="photo__label">Выбрать...</label>
+                    <input type="file" accept="image/*,image/jpeg" id="file" @change="photoPreview()" class="file">
+                    <template v-if="photoPreviews.length > 0">
+                        <template v-for="(photo, index) in photoPreviews" :key="index">
+                            <img :src="photo" class="img"/>
+                        </template>
+                    </template>
+                    <template v-else>
+                        <img src="@/assets/default_user_img.jpg" class="img"/>
+                    </template>
+                    
+                </div>
+                <button @click="register()" class="register__btn">Зарегистрироваться</button>
+                <div class="errors">
+                    <template v-if="nonfields.length">
+                    <p>Пожалуйста, заполните все поля!</p>
+                    <template v-for="(nonfield, key) in nonfields" :key="key">
+                        <p>{{ nonfield }}</p>
+                    </template>
+                    </template>
+                    
+                    <template v-for="(error, key) in errors_register" :key="key">
+                        <p>{{ error }}</p>
+                    </template>
+
+                    <template v-for="(error, key) in errors_login" :key="key">
+                        <p>{{ error }}</p>
+                    </template>
+
+                    <template v-for="(error, key) in errors_id" :key="key">
+                        <p>{{ error }}</p>
+                    </template>
+                </div>
             </div>
-            <input type="file" accept="image/*,image/jpeg" id="file" @change="photoPreview()">
-
-            <template v-for="(photo, index) in photoPreviews" :key="index">
-                <img :src="photo" width="100" height="100"/>
-            </template>
-
-            <button @click="register()">Зарегистрироваться</button>
-            <div class="errors">
-                <template v-if="nonfields.length">
-                <p>Пожалуйста, заполните все поля!</p>
-                <template v-for="(nonfield, key) in nonfields" :key="key">
-                    <p>{{ nonfield }}</p>
-                </template>
-                </template>
-                
-                <template v-for="(error, key) in errors_register" :key="key">
-                    <p>{{ error }}</p>
-                </template>
-
-                <template v-for="(error, key) in errors_login" :key="key">
-                    <p>{{ error }}</p>
-                </template>
-
-                <template v-for="(error, key) in errors_id" :key="key">
-                    <p>{{ error }}</p>
-                </template>
-            </div>
-            
         </div>
-
-        
     </div>
 </template>
 
@@ -228,17 +254,148 @@ export default {
         display: flex;
         align-items: center;
         justify-content: center;
-        margin: 0px;
+        width: 100%;
+        min-height: 84.8vh;
     }
 
     .main__elements{
         display: flex;
+        align-items: center;
         flex-direction: column;
+        background-color: rgb(213, 147, 197);
+        height: 840px;
+        width: 600px;
+        margin-left: 10px;
+        margin-right: 10px;
+        border-radius: 10px;
+        box-shadow: 5px 5px 5px rgb(0, 0, 0, 0.4);
+        margin-top: 30px;
+        margin-bottom: 30px;
+    }
+
+    .main__elements2{
+        width: 455px;
+    }
+
+    .email{
+        font-size: 20px;
+        width: 450px;
+        border-radius: 5px;
+        box-shadow: 3px 3px 3px rgb(0, 0, 0, 0.4);
+    }
+
+    .div__input{
+        padding-bottom: 10px;
+    }
+
+    .p__placeholder{
+        color: white;
+        padding-bottom: 5px;
+    }
+
+    .reg{
+        color: white;
+        font-size: 36px;
+        padding-bottom: 20px;
+        padding-top: 20px;
+    }
+
+    .info{
+        text-align: center;
+        padding-bottom: 10px;
+    }
+
+    #female{
+        margin-left: 20px;
+    }
+
+    input[type=radio] {
+        width: 20px;
+        height: 20px;
+    }
+
+    .div__radio{
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        padding-bottom: 10px;
+    }
+
+    .div__photo{
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        margin-bottom: 20px;
+    }
+
+    #file{
+        opacity: 0;
+        position: absolute;
+        z-index: -1;
+    }
+
+    .photo__label{
+        background-color: rgb(255, 162, 177);
+        border: 1px solid black;
+        border-radius: 3px;
+        width: 90px;
+        height: 20px;
+        margin-right: 30px;
+    }
+
+    .photo__label:hover{
+        cursor: pointer;
+        background-color: rgb(255, 194, 204);
+    }
+
+    .img{
+        width: 50px;
+        height: 50px;
+        object-fit: cover;
+        border-radius: 50px;
+        padding-top: 3px;
+    }
+
+    .register__btn{
+        width: 200px;
+        height: 35px;
+        background: linear-gradient(rgb(255, 107, 132), #3150ff);
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        border: 1px solid black;
+        box-shadow: 3px 3px 3px rgb(0, 0, 0, 0.3);
+        font-size: 18px;
+    }
+
+    .register__btn:hover{
+        background: linear-gradient(rgb(255, 150, 167), #7086ff);
+        cursor: pointer;
     }
 
     .errors{
         display: flex;
         flex-direction: column;
+        color: red;
+        padding-top: 10px;
+        padding-bottom: 10px;
+    }
+
+    @media (max-width: 1000px){
+        .main__elements{
+            width: 90%;
+            height: 900px;
+        }
+
+        .main__elements2{
+            width: 90%;
+        }
+
+        .email{
+            width: 95%;
+        }
     }
 
 </style>
