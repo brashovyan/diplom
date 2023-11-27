@@ -7,9 +7,9 @@ const routes = [
     component: () => import('../views/HomeView.vue')
   },
   {
-    path: '/about',
-    name: 'about',
-    component: () => import('../views/AboutView.vue')
+    path: '/recipes',
+    name: 'recipes',
+    component: () => import('../views/RecipesView.vue')
   },
   {
     path: '/login',
@@ -20,6 +20,21 @@ const routes = [
     path: '/register',
     name: 'register',
     component: () => import('../views/RegisterView.vue')
+  },
+  {
+    path: '/myprofile',
+    name: 'myprofile',
+    component: () => import('../views/MyProfileView.vue')
+  },
+  {
+    path: '/search',
+    name: 'search',
+    component: () => import('../views/SearchView.vue')
+  },
+  {
+    path: '/forgetpassword',
+    name: 'forgetpassword',
+    component: () => import('../views/ForgetPassword.vue')
   },
 ]
 
