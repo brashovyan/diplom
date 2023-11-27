@@ -8,6 +8,7 @@ from .yasg import urlpatterns as doc_urls
 urlpatterns = [
     path('api/v1/admin', admin.site.urls),
     path("api/v1/", include("mainapp.urls")),
+    path("api/v1/user/", include("userapp.urls")),
     path('api/v1/auth/', include('djoser.urls')),
     path('api/v1/auth/', include('djoser.urls.authtoken')),
 ]

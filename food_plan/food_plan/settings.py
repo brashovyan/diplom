@@ -18,6 +18,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'mainapp',
+    'userapp',
     'rest_framework',
     'drf_yasg',
     'corsheaders',
@@ -67,7 +68,7 @@ DATABASES = {
     }
 }
 
-AUTH_USER_MODEL="mainapp.User"
+AUTH_USER_MODEL="userapp.User"
 
 AUTH_PASSWORD_VALIDATORS = [
     {
