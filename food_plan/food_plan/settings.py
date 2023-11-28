@@ -19,6 +19,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'mainapp',
     'userapp',
+    'dishapp',
     'rest_framework',
     'drf_yasg',
     'corsheaders',
@@ -91,7 +92,7 @@ TIME_ZONE = 'Europe/Moscow'
 
 USE_I18N = True
 
-USE_TZ = True
+USE_TZ = False
 
 STATIC_URL = 'static/'
 STATICFILES_DIRS = [
