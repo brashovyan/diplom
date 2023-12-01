@@ -7,7 +7,7 @@ User = get_user_model()
 class Ingredient(models.Model):
     title = models.CharField(max_length=100, verbose_name="Название", help_text="Введите название", null=False)
     price = models.FloatField(default=0, verbose_name="Цена (за шт/кг)", help_text="Введите цену (за шт/кг)", null=False)
-    image = models.ImageField(upload_to='ingredient/', blank=True, null=True, verbose_name="Фото", help_text="Выберите фото ингредиента")
+    other_names = models.TextField(verbose_name="Другие названия", help_text="Введите другие названия", null=True)
     users_ban = models.ManyToManyField(User, help_text='Выберите пользователей, которые не хотят видеть этот ингредиент в блюдах', verbose_name='Пользователи, которые не хотят видеть этот ингредиент в блюдах', blank=True, related_name='user_ban_ingredient')
     objects = models.Manager()
 

@@ -8,6 +8,8 @@ from django.dispatch import receiver
 from django.contrib.auth import get_user_model
 User = get_user_model()
 from django.contrib.auth.models import Group
+from dishapp.models import Ingredient
+from django.shortcuts import get_object_or_404
 
 
 # этот метод вызывается после регистрации юзера
@@ -45,3 +47,27 @@ def pre_save_image(sender, instance, *args, **kwargs):
         pass
 
 
+# любой авторизованный юзер может добавить в черный список ингредиент (чтобы он не попадался в блюдах) по айди
+class BanIngredientView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        pk = kwargs.get("pk", None)
+        if pk:
+            ingredient = get_object_or_404(Ingredient, pk=pk)
+            ingredient.users_ban.add(request.user)
+            # получить все ингредиенты, которые забанил юзер
+            #print(request.user.user_ban_ingredient.all())
+            return Response({"message": f'Больше {ingredient.title} не будет попадаться в блюдах в вашем меню'})
+
+
+# Любой авторизованный юзер может снова разрешить ингредиент
+class AllowIngredientView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        pk = kwargs.get("pk", None)
+        if pk:
+            ingredient = get_object_or_404(Ingredient, pk=pk)
+            ingredient.users_ban.remove(request.user)
+            return Response({"message": f'{ingredient.title} снова будет появляться в блюдах в вашем меню'})
