@@ -18,7 +18,16 @@ urlpatterns = [
     path('ingredient/<int:pk>/', IngredientDetailView.as_view()),
     path('ingredient_create/', IngredientCreateView.as_view()),
     path('create/', DishCreateView.as_view()),
+    path('update/<int:pk>/', DishUpdateView.as_view()),
+    path('delete/<int:pk>/', DishDeleteView.as_view()),
+    path('like/<int:pk>/', DishLikeView.as_view()),
+    path('dislike/<int:pk>/', DishDislikeView.as_view()), # пк блюда
+    path('clear_like/<int:pk>/', DishClearLikeView.as_view()), # пк блюда
+    path('create_review/<int:pk>/', ReviewCreateView.as_view()), # пк блюда
+    path('update_delete_review/<int:pk>/', ReviewUpdateDeleteView.as_view()), # пк отзыва
     path('', DishListView.as_view()),
-    path('<int:pk>/', DishDetailView.as_view()),
+    path('<int:pk>/', DishDetailView.as_view()), # пк блюда
+    path('get_actual_price/<int:pk>/', DishActualPriceView.as_view()), # пк блюда
     path('', include(router.urls)),
+
 ]

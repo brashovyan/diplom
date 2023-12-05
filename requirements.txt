@@ -5,3 +5,5 @@ djoser
 drf-yasg
 Pillow
 setuptools
+beautifulsoup4
+func-timeout
