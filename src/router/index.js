@@ -36,6 +36,11 @@ const routes = [
     name: 'forgetpassword',
     component: () => import('../views/ForgetPassword.vue')
   },
+  {
+    path: '/add_dish',
+    name: 'add_dish',
+    component: () => import('../views/AddDishView.vue')
+  },
 ]
 
 const router = createRouter({
