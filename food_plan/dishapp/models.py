@@ -68,6 +68,7 @@ class Dish(models.Model):
     photo8 = models.ImageField(upload_to='dish/', blank=True, null=True, verbose_name="Фото", help_text="Выберите фото блюда")
     photo9 = models.ImageField(upload_to='dish/', blank=True, null=True, verbose_name="Фото", help_text="Выберите фото блюда")
     reviews = models.ManyToManyField('Review', blank=True, verbose_name='Отзывы')
+    date_create = models.DateTimeField(auto_now_add=True, null=False)
     objects = models.Manager()
 
     def __str__(self):

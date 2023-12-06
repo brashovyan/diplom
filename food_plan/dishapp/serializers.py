@@ -45,6 +45,7 @@ class DishListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Dish
         fields = ['id', 'title', 'description', 'calories', 'time', 'likes', 'dislikes', 'creator', 'mainphoto']
+        read_only_fields = ['date_create']
 
 
 # Детальное отображение блюда
@@ -56,6 +57,7 @@ class DishDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = Dish
         fields = "__all__"
+        read_only_fields = ['date_create']
 
 
 # Создание блюда (при создании никто не может указать лайки, дизлайки, отзывы, modercheck)
@@ -69,6 +71,7 @@ class DishCreateSerializer(serializers.ModelSerializer):
                   "dinner",
                   "usualdiet", "weightloss", "weightgain", "recipe", "time", "mainphoto", "photo1", "photo2", "photo3",
                   "photo4", "photo5", "photo6", "photo7", "photo8", "photo9", "cookware", "creator", "id"]
+        read_only_fields = ['date_create']
 
 
 # изменение блюда для обычного пользователя (он не может менять лайки, дизлайки, modercheck, отзывы)
@@ -78,6 +81,7 @@ class DishUpdateUsualUserSerializer(serializers.ModelSerializer):
         fields = ['title', 'description', 'proteins', "fats", "carbohydrates", "calories", "breakfast", "lunch", "dinner",
                   "usualdiet", "weightloss", "weightgain", "recipe", "time", "mainphoto", "photo1", "photo2", "photo3",
                   "photo4", "photo5", "photo6", "photo7", "photo8", "photo9", "cookware"]
+        read_only_fields = ['date_create']
 
 
 # изменение блюда для админа (он может делать че хочет)
@@ -85,5 +89,6 @@ class DishUpdateAdminSerializer(serializers.ModelSerializer):
     class Meta:
         model = Dish
         fields = "__all__"
+        read_only_fields = ['date_create']
 
 

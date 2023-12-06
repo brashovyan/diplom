@@ -29,5 +29,5 @@ urlpatterns = [
     path('<int:pk>/', DishDetailView.as_view()), # пк блюда
     path('get_actual_price/<int:pk>/', DishActualPriceView.as_view()), # пк блюда
     path('', include(router.urls)),
-
+    path('search_ingredient/', IngredientSearchView.as_view()),
 ]

@@ -74,25 +74,28 @@ class DishCreateView(APIView):
         dish = Dish.objects.get(pk=serializer.data["id"])
 
         # после того, как создали блюдо, добавляем ингредиенты
-        for ingredient_dict in request.data["ingredients"]:
-            for ingredient, count in ingredient_dict.items():
-                try:
-                    # пытаюсь найти ингредиент по названиям
-                    ing = Ingredient.objects.filter(other_names__contains = ingredient.strip().lower())
-                    if ing:
-                        # если нашёл, то просто добавляю в блюдо
-                        dishingredient = DishIngredients(dish=dish, ingredient=ing[0], count=count)
-                        dishingredient.save()
-                    else:
-                        # если не нашел, то сначала я создаю этот ингредиент
-                        new_ingredient = Ingredient(title=ingredient, other_names=ingredient.strip().lower())
-                        new_ingredient.save()
+        for ingredient in request.data["ingredients"]:
+            try:
+                # Если у ингредиента нет айдишника
+                if ingredient["id"] == "no":
+                    # то я сначала создаю его
+                    new_ingredient = Ingredient(title=ingredient["title"].strip().lower(), other_names=ingredient["title"].strip().lower())
+                    new_ingredient.save()
 
-                        # а потом добавляю в блюдо
-                        dishingredient = DishIngredients(dish=dish, ingredient=new_ingredient, count=count)
-                        dishingredient.save()
-                except:
-                    pass # на всякий случай, чтобы краша не было
+                    # а потом добавляю в блюдо
+                    dishingredient = DishIngredients(dish=dish, ingredient=new_ingredient, count=ingredient["count"])
+                    dishingredient.save()
+
+                # если у ингредиента есть айдишник
+                else:
+                    ing = Ingredient.objects.get(id=ingredient["id"])
+
+                    # добавляю в блюдо
+                    dishingredient = DishIngredients(dish=dish, ingredient=ing, count=ingredient["count"])
+                    dishingredient.save()
+
+            except:
+                pass # на всякий случай, чтобы краша не было
 
         # json, который я жду (лайки, дизлайки, отзывы, логично, пустые. Modercheck по дефолту False)
         """
@@ -116,7 +119,7 @@ class DishCreateView(APIView):
                 "photo1": photo,
                 "photo2": photo,
                 и так далее фотки (они необязательны)
-                "ingredients": [{"молоко": "200 мл"}, {"яйца": "5 шт"}, {"картофель": "100 гр"}]
+                "ingredients": [ { "id": "13", "title": "куриная грудка", "count": "300 гр" }, { "id": "4", "title": "картофель", "count": "5 шт" }, { "id": "no", "title": "лавровый лист", "count": "1 шт" } ]
             }
         """
         return Response({'message': serializer.data})
@@ -232,17 +235,17 @@ class DishActualPriceView(APIView):
                             full_price += price
                             ingredient.ingredient.last_update_price = date.today()
                             ingredient.ingredient.save()
-                            result.append({"id": ingredient.ingredient.id, 'title': ingredient.ingredient.title, "price": price, "last_update_price": ingredient.ingredient.last_update_price})
+                            result.append({"id": ingredient.ingredient.id, 'title': ingredient.ingredient.title, "price": price, "last_update_price": ingredient.ingredient.last_update_price, "count": ingredient.count})
 
                         # если не получилось
                         else:
                             full_price += ingredient.ingredient.price
-                            result.append({"id": ingredient.ingredient.id, 'title': ingredient.ingredient.title, "price": ingredient.ingredient.price, "last_update_price": ingredient.ingredient.last_update_price})
+                            result.append({"id": ingredient.ingredient.id, 'title': ingredient.ingredient.title, "price": ingredient.ingredient.price, "last_update_price": ingredient.ingredient.last_update_price, "count": ingredient.count})
 
                     # если новая цена не нужна
                     else:
                         full_price += ingredient.ingredient.price
-                        result.append({"id": ingredient.ingredient.id, 'title': ingredient.ingredient.title, "price": ingredient.ingredient.price, "last_update_price": ingredient.ingredient.last_update_price})
+                        result.append({"id": ingredient.ingredient.id, 'title': ingredient.ingredient.title, "price": ingredient.ingredient.price, "last_update_price": ingredient.ingredient.last_update_price, "count": ingredient.count})
                 return Response({"full_price": full_price, "ingredients": result})
         except:
             return Response({"error": "не удалось получить актуальные цены"})
@@ -331,6 +334,21 @@ class ReviewUpdateDeleteView(APIView):
                 review.delete()
                 return Response({"message": "Комментарий удалён!"})
             return Response({"error": "Вы не можете удалить этот комментарий"})
+
+
+# поиск ингредиента по названию
+class IngredientSearchView(APIView):
+    permission_classes = [IsAuthenticated]
+    def post(self, request, *args, **kwargs):
+        print(request.data)
+        title = request.data["title"]
+        ingredients_list = []
+        if len(title) > 1:
+            ingredients = Ingredient.objects.filter(other_names__contains = title.strip().lower())
+            if ingredients:
+                for ingredient in ingredients:
+                    ingredients_list.append({f"{ingredient.id}": f"{ingredient.title}"})
+        return Response({"result": ingredients_list})
 
 
 
