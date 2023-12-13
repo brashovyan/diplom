@@ -8,6 +8,7 @@ from django.dispatch import receiver
 from django.contrib.auth import get_user_model
 User = get_user_model()
 from django.contrib.auth.models import Group
+from .tasks import *
 
 
 class IndexView(APIView):
@@ -20,5 +21,6 @@ class IndexView(APIView):
         # # требования к паролю: 8 символов и больше, не распространён (qwertyui, password не катит),
         # # а так могут быть только буквы (но не только цифры), необязательны спецсимволы, необязательны заглавные
         # user.set_password('artik812')
-        # user.save()
+        celery_test.delay()
+  
         return Response({'Message': 'Hello, world!'})
