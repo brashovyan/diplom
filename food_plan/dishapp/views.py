@@ -338,7 +338,7 @@ class ReviewUpdateDeleteView(APIView):
 
 # поиск ингредиента по названию
 class IngredientSearchView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = []
     def post(self, request, *args, **kwargs):
         print(request.data)
         title = request.data["title"]
