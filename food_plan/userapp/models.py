@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth.hashers import make_password
 from django.contrib.auth.models import AbstractUser, UserManager
+from django.contrib.auth.models import Group
 
 
 # Убираю у юзера поле username, и делаю вместо него email. Логин через email
@@ -23,9 +24,19 @@ class CustomUserManager(UserManager):
 
         assert extra_fields['is_staff']
         assert extra_fields['is_superuser']
-        return self._create_user(email, password, **extra_fields)
+        user = self._create_user(email, password, **extra_fields)
+
+        # Создаю все роли, если их нет
+        administrator = Group.objects.get_or_create(name='administrator')
+        user.groups.add(administrator)
+
+        Group.objects.get_or_create(name='moderator')
+        Group.objects.get_or_create(name='usual')
+
+        return user
 
 
+# Сам юзер с кастомными полями
 class User(AbstractUser):
     SEX_CHOISE=[
         ('M', "Мужской"),

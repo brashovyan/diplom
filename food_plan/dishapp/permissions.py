@@ -5,7 +5,7 @@ User = get_user_model()
 
 class IsModerator(permissions.BasePermission):
     def has_permission(self, request, view):
-        if User.objects.filter(pk=request.user.id, groups__name='Moderator').exists():
+        if User.objects.filter(pk=request.user.id, groups__name='moderator').exists():
             return True
         else:
             return False

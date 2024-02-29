@@ -9,4 +9,5 @@ from rest_framework import routers
 urlpatterns = [
     path('ban_ingredient/<int:pk>/', BanIngredientView.as_view()),
     path('allow_ingredient/<int:pk>/', AllowIngredientView.as_view()),
+    path('me/', UserMeFrontView.as_view()),
 ]

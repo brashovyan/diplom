@@ -10,6 +10,7 @@ User = get_user_model()
 from django.contrib.auth.models import Group
 from dishapp.models import Ingredient
 from django.shortcuts import get_object_or_404
+from .serializers import *
 
 
 # этот метод вызывается после регистрации юзера
@@ -71,3 +72,23 @@ class AllowIngredientView(APIView):
             ingredient = get_object_or_404(Ingredient, pk=pk)
             ingredient.users_ban.remove(request.user)
             return Response({"message": f'{ingredient.title} снова будет появляться в блюдах в вашем меню'})
+
+
+# Кастомное получение информации о себе для фронта (шапка, авторизация)
+class UserMeFrontView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        groups = request.user.groups.all()
+        user_groups = []
+        for group in groups:
+            user_groups.append(group.name)
+        if "administrator" in user_groups or request.user.is_superuser:
+            user_group = "administrator"
+        elif "moderator" in user_groups:
+            user_group = "moderator"
+        else:
+            user_group = "usual"
+        data = UserSerializer(request.user, many=False, context={"request": request}).data
+        data['user_group'] = user_group
+        return Response(data)

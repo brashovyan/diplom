@@ -88,7 +88,8 @@ class DishCreateView(APIView):
 
                 # если у ингредиента есть айдишник
                 else:
-                    ing = Ingredient.objects.get(id=ingredient["id"])
+                    ing = get_object_or_404(Ingredient, pk=ingredient["id"])
+                    # ing = Ingredient.objects.get(id=ingredient["id"])
 
                     # добавляю в блюдо
                     dishingredient = DishIngredients(dish=dish, ingredient=ing, count=ingredient["count"])
@@ -136,17 +137,18 @@ class DishUpdateView(APIView):
 
             # проверяем что это создатель блюда (он не может изменять лайки, дизлайки, отзывы, modercheck)
             if request.user == dish.creator:
-                serializer = DishUpdateUsualUserSerializer(data=request.data, instance=dish, partial=True)
+                serializer = DishUpdateUsualUserSerializer(data=request.data, instance=dish, partial=True, context={"request": request})
                 serializer.is_valid(raise_exception=True)
                 serializer.save()
                 # когда обычный юзер изменяет блюдо, я снова ставлю modercheck = False. Мало ли чё он там наизменял
                 dish.modercheck = False
+                dish.in_algorithm = False
                 dish.save()
                 return Response({'title': serializer.data})
 
             # если это админ или модер (они могут менять всё)
-            elif User.objects.filter(pk=request.user.id, groups__name='Moderator').exists() or request.user.is_superuser:
-                serializer = DishUpdateAdminSerializer(data=request.data, instance=dish, partial=True)
+            elif User.objects.filter(pk=request.user.id, groups__name='moderator').exists() or request.user.is_superuser:
+                serializer = DishUpdateAdminSerializer(data=request.data, instance=dish, partial=True, context={"request": request})
                 serializer.is_valid(raise_exception=True)
                 serializer.save()
                 return Response({'title': serializer.data})
@@ -188,7 +190,7 @@ class DishDetailView(APIView):
                                         "count": ingredient.count, "price": ingredient.ingredient.price,
                                          "last_update_price": ingredient.ingredient.last_update_price})
                 full_price += ingredient.ingredient.price
-            return Response({'dish': DishDetailSerializer(dish, many=False).data, "ingredients": ingredients_list, 'full_price': full_price})
+            return Response({'dish': DishDetailSerializer(dish, many=False, context={"request": request}).data, "ingredients": ingredients_list, 'full_price': full_price})
 
 
 # удаление блюда (создатель, админ или модер)
@@ -320,7 +322,7 @@ class ReviewUpdateDeleteView(APIView):
         if pk:
             review = get_object_or_404(Review, pk=pk)
             if request.user == review.creator or User.objects.filter(pk=request.user.id, groups__name='Moderator').exists() or request.user.is_superuser:
-                serializer = ReviewCreateSerializer(data=request.data, instance=review, partial=True)
+                serializer = ReviewCreateSerializer(data=request.data, instance=review, partial=True, context={"request": request})
                 serializer.is_valid(raise_exception=True)
                 serializer.save()
                 return Response({"message": f"Вы изменили комментарий"})
@@ -340,7 +342,6 @@ class ReviewUpdateDeleteView(APIView):
 class IngredientSearchView(APIView):
     permission_classes = []
     def post(self, request, *args, **kwargs):
-        print(request.data)
         title = request.data["title"]
         ingredients_list = []
         if len(title) > 1:
