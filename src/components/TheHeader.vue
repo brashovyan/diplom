@@ -9,8 +9,22 @@
                     <p>Рецепты</p>
                 </div>
             </router-link>
+
+            <template v-if="$store.state.isAuthenticated">
+                <template v-if="$store.state.user_group == 'administrator'">
+                    <p><router-link to="/admin" class="login">Администратору</router-link></p>
+                </template>
+                <template v-else-if="$store.state.user_group == 'moderator'">
+                    <p><router-link to="/moderator" class="login">Модератору</router-link></p>
+                </template>
+            </template>
         </div>
+
         <div class="header__right">
+            <template v-if="$store.state.isAuthenticated">
+                <p><router-link to="/add_dish" class="login">Создать рецепт</router-link></p>
+            </template>
+
             <form action="/search" method="get">
                 <input type="search" name="search_str" class="search" placeholder="Поиск...">
             </form>
@@ -56,10 +70,6 @@ export default {
     };
   },
 
-  mounted() {
-        document.title = 'Artemida Food';
-    },
-
   methods: {
     async logout() {
         // отправляю на сервак пост запрос, что хочу разлогиниться
@@ -91,6 +101,7 @@ export default {
         localStorage.removeItem("token");
         localStorage.removeItem("userid");
         localStorage.removeItem("userphoto");
+        localStorage.removeItem("user_group");
 
         // удаляю токен и айди из store
         this.$store.commit('removeToken');

@@ -6,6 +6,7 @@ export default createStore({
     token: '',
     userid: '',
     userphoto: '',
+    user_group: '',
   },
 
   mutations: {
@@ -15,11 +16,13 @@ export default createStore({
             state.isAuthenticated = true;
             state.userid = localStorage.getItem('userid');
             state.userphoto = localStorage.getItem('userphoto');
+            state.user_group = localStorage.getItem('user_group');
         } else {
             state.token = '';
             state.isAuthenticated = false;
             state.userid = '';
             state.userphoto = '';
+            state.user_group = '';
         } 
     },
 
@@ -36,11 +39,16 @@ export default createStore({
       state.userphoto = userphoto;
     },
 
+    setUsergroup(state, user_group){
+      state.user_group = user_group;
+    },
+
     removeToken(state) {
         state.token = '';
         state.isAuthenticated = false;
         state.userid = '';
         state.userphoto = '';
+        state.user_group = '';
     },
   },
 

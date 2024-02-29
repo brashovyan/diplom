@@ -183,6 +183,7 @@ export default {
             localStorage.removeItem("token");
             localStorage.removeItem("userid");
             localStorage.removeItem("userphoto");
+            localStorage.removeItem("user_group");
             this.$store.commit('removeToken');
             const formData2 = {
                 email: this.email,
@@ -221,15 +222,18 @@ export default {
             let load = document.querySelector('.loading'); 
             load.style.display = 'block';
 
-            await axios.get('auth/users/me/').then(response => {
+            await axios.get('user/me/').then(response => {
                 const userid = response.data.id;
                 const userphoto = response.data.image;
+                const user_group = response.data.user_group;
                 localStorage.setItem("userid", userid);
                 localStorage.setItem("token", this.token);
                 localStorage.setItem("userphoto", userphoto);
+                localStorage.setItem("user_group", user_group);
                 this.$store.commit('setToken', this.token);
                 this.$store.commit('setUserid', userid);
                 this.$store.commit('setUserphoto', userphoto);
+                this.$store.commit('setUsergroup', user_group);
                 let load = document.querySelector('.loading'); load.style.display = 'none';
                 this.$router.push('/');
             })

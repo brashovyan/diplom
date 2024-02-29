@@ -1,33 +1,176 @@
 <template>
-    <div class="main">
-        <div class="column">
-            <p>Введите название ингредиента:</p>
-            <input type="text" placeholder="Название игредиента" v-model="ingredient_title" style="width: 300px;">
-            <template v-for="(ingredient_list, key_list) in ingredient_response" :key="key_list">
-                <template v-for="(ingredient_json, key_json) in ingredient_list" :key="key_json">
-                    <template v-for="(ingredient, key) in ingredient_json" :key="key">
-                        <p class="ingredient__result" @click="addIngredientCandidate(ingredient, key)">{{ ingredient }}</p>
-                    </template>
+    <template v-if="$store.state.isAuthenticated">
+        <div class="main">
+            <div>
+                <p class="main__title">Создание рецепта 🍔</p>
+            </div>
+
+            <div class="line"></div>
+
+            <!-- Название, описание -->
+            <div class="row">
+                <p class="label__input">Название рецепта:</p>
+                <input type="text" placeholder="Название рецепта" v-model="dish_title" class="text__input">
+            </div>
+
+            <div class="row__textarea">
+                <p class="label__input">Краткое описание:</p>
+                <textarea placeholder="Краткое описание" v-model="dish_description" class="textarea__input"></textarea>
+            </div>
+            
+            <!-- Ингредиенты -->
+            <div class="pink">
+                <div class="row__pink__ingredients">
+                    <div class="ingredients__title">
+                        <p class="label__input">Ингредиенты 🧅:</p>
+                        <div class="ingredients__title__empty"></div>
+                    </div>
+                    
+                    <div class="ingredients">
+                        <div class="ingredients__column">
+                            <p class="ingredients__label">Введите название ингредиента:</p>
+                            <input type="text" placeholder="Название игредиента" v-model="ingredient_title" class="ingredient__input">
+                            <template v-for="(ingredient_list, key_list) in ingredient_response" :key="key_list">
+                                <template v-for="(ingredient_json, key_json) in ingredient_list" :key="key_json">
+                                    <template v-for="(ingredient, key) in ingredient_json" :key="key">
+                                        <p class="ingredient__result" @click="addIngredientCandidate(ingredient, key)">{{ ingredient }}</p>
+                                    </template>
+                                </template>
+                            </template>
+                        </div>
+                        
+                        <div class="ingredient__add">
+                            <input type="text" placeholder="Кол-во" v-model="ingredient_count" maxlength="10" class="ingredient__count">
+                            <template v-if="ingredient_find == true">
+                                <button id="add__ing__btn" @click="addIngredientDish()">Добавить</button>
+                            </template>
+                            <template v-else-if="ingredient_title.length > 1 && ingredient_response_count == 0">
+                                <button id="add__ing__btn" @click="addIngredientDish()">Добавить</button>
+                            </template>
+                            <template v-else>
+                                <button id="add__ing__btn__dis" disabled>Добавить</button>
+                            </template>
+                        </div>
+                    </div>
+
+                    <div class="ingredients__added">
+                        <div>
+                            <p class="ingredients__added__label">Добавленные ингредиенты:</p>
+                        
+                                <template v-for="(ingredient, key) in ingrients_dish" :key="key">
+                                    <div class="ingredients__list__row">
+                                        <p class="ingredients__added__list">{{ ingredient["title"] }} - {{ ingredient["count"] }}</p>
+                                        <p @click="deleteIngredintFromDish(ingredient)" class="remove__ingredient">X</p>
+                                    </div>
+                                </template>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Энергетическая ценность -->
+            <div class="row">
+                <div class="div__calories">
+                    <p class="label__input" style="margin-right: 21.3px;">Калории:</p>
+                    <input type="number" placeholder="Калории" v-model="calories" min=0 class="number__input">
+                </div>
+
+                <div class="div__calories">
+                    <p class="label__input">Белки:</p>
+                    <input type="number" placeholder="Белки, гр" v-model="proteins" min=0 class="number__input">
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="div__calories">
+                    <p class="label__input">Углеводы:</p>
+                    <input type="number" placeholder="Углеводы, гр" v-model="carbohydrates" min=0 class="number__input">
+                </div>
+                
+
+                <div class="div__calories">
+                    <p class="label__input">Жиры:</p>
+                    <input type="number" placeholder="Жиры, гр" v-model="fats" min=0 class="number__input">
+                </div>
+            </div>
+
+            <!-- Типы диет -->
+            <div class="pink">
+                <div class="column">
+                    <div class="row">
+                        <p class="label__input">Время готовки 🕓:</p>
+                        <input type="text" placeholder="Время (произвольно)" v-model="time" maxlength="30" class="text__input">
+                    </div>
+
+                    <p class="label__input">Подходит для:</p>
+                    <div class="checkboxes">
+                        <input type="checkbox" v-model="breakfast" id="checkbox1">
+                        <label for="checkbox1" class="checkbox__label">Завтрака</label>
+
+                        <input type="checkbox" v-model="usualdiet" id="checkbox2">
+                        <label for="checkbox2" class="checkbox__label">Обычного рациона</label>
+                    </div>
+                    <div class="checkboxes">
+                        <input type="checkbox" v-model="lunch" id="checkbox3">
+                        <label for="checkbox3" class="checkbox__label">Обеда</label>
+
+                        <input type="checkbox" v-model="weightloss" id="checkbox4">
+                        <label for="checkbox4" class="checkbox__label" style="margin-right: 75.2px;">Похудения</label>
+                    </div>
+                    <div class="checkboxes">
+                        <input type="checkbox" v-model="dinner" id="checkbox5">
+                        <label for="checkbox5" class="checkbox__label">Ужина</label>
+
+                        <input type="checkbox" v-model="weightgain" id="checkbox6">
+                        <label for="checkbox6" class="checkbox__label" style="margin-right: 57.2px;">Набора веса</label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- фоточки -->
+            <div class="row">
+                <p class="label__input">Фотографии 📷:</p>
+            </div>
+
+            <!-- главное фото -->
+            <div class="row">
+                <p class="label__input" style="font-size: 20px;">Выберите главное фото:</p>
+              
+                    <label for="main__photo" class="photo__input">Выбрать</label>
+                    <input type="file" accept="image/*,image/jpeg" id="main__photo" @change="photoPreviewMain()">
+            </div>
+            <template v-if="photo_preview_main.length > 0">
+                <template v-for="(photo, index) in photo_preview_main" :key="index">
+                    <img :src="photo" class="img"/>
+                    <p @click="deleteMainPhoto()" class="remove__main__photo">X</p>
                 </template>
             </template>
+            
+            <!-- Остальные фото -->
+            <div class="row" style="margin-bottom: -20px;">
+                <p class="label__input" style="font-size: 20px; ">Выберите ещё до 9 фотографий:</p>
+            </div>
+            <div class="row">
+                <p class="label__input" style="font-size: 14px;">Подсказка: на компьютере нажимайте Ctrl + ЛКМ, чтобы выбрать несколько фото</p>
+            </div>
+            <div class="row" style="margin-left: 20px; margin-top: -5px;">
+                <label for="other__photo" class="photo__input">Выбрать</label>
+                <input type="file" accept="image/*,image/jpeg" id="other__photo" multiple @change="checkLength()">
+            </div>
+
+            <div class="photos">
+                <template v-if="photo_preview_other.length > 0">
+                    <template v-for="(photo, index) in photo_preview_other" :key="index">
+                        <img :src="photo" class="one__photo"/>
+                    </template>
+                </template>
+            </div>
         </div>
-            <input type="text" placeholder="Укажите количество" v-model="ingredient_count">
-            <template v-if="ingredient_find == true">
-                <button id="add__ing__btn" @click="addIngredientDish()">Добавить</button>
-            </template>
-            <template v-else-if="ingredient_title.length > 1 && ingredient_response_count == 0">
-                <button id="add__ing__btn" @click="addIngredientDish()">Добавить</button>
-            </template>
-            <template v-else>
-                <button id="add__ing__btn" disabled>Добавить</button>
-            </template>
-    </div>
-
-    <template v-for="(ingredient, key) in ingrients_dish" :key="key">
-        <p @click="deleteIngredintFromDish(ingredient)">{{ ingredient["title"] }} - {{ ingredient["count"] }}</p>
     </template>
-
-  </template>
+    <template v-else>
+        <h1>Ты не зареган</h1>
+    </template>
+</template>
 
 
 <script>
@@ -36,11 +179,28 @@ import axios from 'axios'
 export default{
     data() {
         return {
+            dish_title: "", // название блюда
+            dish_description: "", // краткое описани
+            calories: "", // калории
+            proteins: "", // белки
+            fats: "", // жиры
+            carbohydrates: "", // углеводы
+            time: "", // время готовки
+            breakfast: false, // для завтрака
+            lunch: false, // для обеда
+            dinner: false, // для ужина
+            usualdiet: false, // для обычной диеты
+            weightloss: false, // для похудения
+            weightgain: false, // для  набора веса
+            photo_preview_main: [], // превьюшка для главной фотки
+            photo_preview_other: [], // превьюшки для остальных фоток
+
+
             ingredient_title: "", // название ингредиента, которое вводит пользователь
             ingredient_count: "", // кол-во ингредиента
             ingredient_response: {"result": []}, // результат поиска игредиента
-            ingredient_find: false,
-            ingredient_response_count: 0, // кол-во результатов поиска (в html у меня не получилосб)
+            ingredient_find: false, // выбран ли ингредиент из списка
+            ingredient_response_count: 0, // кол-во результатов поиска
             ingredient_candidate: "", // блюдо, которое юзер выбрал из выпадающего списка
             ingrients_dish: [], // добавленные ингредиенты в блюдо
         }
@@ -89,8 +249,9 @@ export default{
         }
     },
 
+    // это название страницы в закладках браузера
     mounted() {
-        
+        document.title = 'Создание рецепта'
     },
 
     methods: {
@@ -128,8 +289,46 @@ export default{
             if (index > -1)  
                 this.ingrients_dish.splice(index, 1); 
         },
-        
-    },
+
+        // превьюшка главной фотки
+        photoPreviewMain() {
+            this.photo_preview_main = [];
+            var imagefiles = document.querySelector('#main__photo').files;
+            for(var i=0; i < imagefiles.length; i++){
+                this.photo_preview_main.push(URL.createObjectURL(imagefiles[i]))
+            }
+        },
+
+        // Удаление главной фотографии
+        deleteMainPhoto(){
+            var imagefiles = document.querySelector('#main__photo');
+            imagefiles.value = "";
+            this.photo_preview_main = [];
+        },
+
+        // при каждом добавлении фоток
+        checkLength() {
+            // проверяю кол-во фоток (если больше 9, то я всё очищаю)
+            var imagefiles = document.querySelector('#other__photo');
+            if (imagefiles.files.length > 9) {
+                alert("Можно прикрепить только не больше 9 фото");
+                imagefiles.value = "";
+                this.photo_preview_other = [];
+            }
+            else{
+                this.photoPreviewOther();
+            }
+        },
+
+        // превьюшки остальных фоток
+        photoPreviewOther(){
+            this.photo_preview_other = [];
+            var imagefiles = document.querySelector('#other__photo').files;
+            for(var i=0; i < imagefiles.length; i++){
+                this.photo_preview_other.push(URL.createObjectURL(imagefiles[i]))
+            }
+        },
+    },      
 }
 </script>
 
@@ -137,15 +336,380 @@ export default{
     .main{
         display: flex;
         align-items: center;
-        justify-content: flex-start;
+        justify-content: center;
+        flex-direction: column;
+        margin-top: 10px;
+        margin-bottom: 10px;
     }
-    .column{
+
+    .main__title{
+        font-size: 40px;
+        margin-bottom: 10px;
+        font-weight: 600;
+    }
+
+    .line{
+        width: 300px;
+        border-bottom: 2px solid rgb(0, 0, 0);
+        margin-bottom: 10px;
+    }
+
+    .label__input{
+        font-size: 24px;
+        margin: 10px;
+    }
+
+    .text__input{
+        margin: 10px;
+        font-size: 20px;
+        border-radius: 5px;
+        width: 300px;
+        border: 2px solid rgb(0, 0, 0);
+    }
+
+    .textarea__input{
+        width: 300px; 
+        height: 200px; 
+        resize: none; 
+        margin: 10px;
+        font-size: 20px;
+        border-radius: 5px;
+        border: 2px solid rgb(0, 0, 0);
+    }
+
+    .row{
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-direction: row;
+        width: 570px;
+        margin-top: 10px;
+        margin-bottom: 10px;
+    }
+
+    .pink{
+        width: 100%;
+        background-color: #F9E8FF;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding-top: 10px;
+        padding-bottom: 10px;
+    }
+
+    .row__pink__ingredients{
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        
+        flex-direction: column;
+        width: 570px;
+    }
+
+    .row__textarea{
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        flex-direction: row;
+        width: 570px;
+        margin-top: 10px;
+        margin-bottom: 10px;
+    }
+
+    .ingredients{
+        display: flex;
+        flex-direction: row;
+    }
+
+    .ingredients__title{
+        display: flex;
+        flex-direction: row;
+        margin-left: -10px;
+    }
+
+    .ingredients__label{
+        margin-left: 10px;
+        font-size: 20px;
+    }
+
+    .ingredients__title__empty{
+        width: 347px;
+        height: 10px;
+    }
+
+    .ingredient__input{
+        margin-left: 10px;
+        margin-right: 10px;
+        margin-top: 10px;
+        font-size: 20px;
+        border-radius: 5px;
+        width: 300px;
+    }
+
+    .ingredient__count{
+        margin-left: 10px;
+        margin-right: 10px;
+        margin-top: 33px;
+        font-size: 20px;
+        border-radius: 5px;
+        width: 100px;
+    }
+
+    .ingredients__column{
         display: flex;
         flex-direction: column;
+    }
+
+    .ingredient__result{
+        margin-left: 11px;
+        margin-right: 10px;
+        width: 300px;
+        background-color: white;
     }
     
     .ingredient__result:hover{
         cursor: pointer;
         background-color: antiquewhite;
     }
+
+    .ingredients__added{
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        justify-content: center;
+        width: 493px;
+    }
+
+    .ingredients__added__label{
+        font-size: 20px;
+        margin-top: 10px;
+        margin-bottom: 10px;
+    }
+
+    #add__ing__btn{
+        margin-top: 33px;
+        height: 25px;
+        width: 70px;
+        background-color: rgb(200, 0, 255);
+        color: white;
+        border-radius: 5px;
+    }
+
+    #add__ing__btn__dis
+    {
+        margin-top: 33px;
+        height: 25px;
+        width: 70px;
+        background-color: rgb(246, 211, 255);
+        color: white;
+        border-radius: 5px;
+    }
+
+    #add__ing__btn:hover
+    {
+        cursor: pointer;
+        background-color: rgb(221, 97, 255);
+    }
+
+    .ingredient__add{
+        display: flex;
+        align-items: flex-start;
+        justify-content: flex-start;
+    }
+
+    .ingredients__added__list{
+        margin-bottom: 10px;
+    }
+
+    .ingredients__list__row{
+        display: flex;
+        flex-direction: row;
+    }
+
+    .remove__ingredient{
+        margin-left: 10px;
+        font-size: 18px;
+        color: red;
+    }
+
+    .remove__ingredient:hover{
+        cursor: pointer;
+        color: rgb(255, 146, 146);
+    }
+
+    .number__input{
+        margin: 10px;
+        font-size: 20px;
+        border-radius: 5px;
+        width: 120px;
+    }
+
+    .div__calories{
+        display: flex; 
+        flex-direction: row;
+    }
+
+    .column{
+        display: flex;
+        flex-direction: column;
+    }
+
+    .checkboxes{
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+        margin-left: 10px;
+        margin-bottom: 10px;
+    }
+
+    .checkbox__label{
+        font-size: 20px;
+    }
+
+    /* Красивый чекбокс */
+
+    input[type="checkbox"]:checked, 
+    input[type="checkbox"]:not(:checked), 
+    input[type="radio"]:checked, 
+    input[type="radio"]:not(:checked) 
+    {
+        position: absolute;
+        left: -9999px;
+    }
+
+    input[type="checkbox"]:checked + label, 
+    input[type="checkbox"]:not(:checked) + label, 
+    input[type="radio"]:checked + label, 
+    input[type="radio"]:not(:checked) + label {
+        display: inline-block;
+        position: relative;
+        padding-left: 28px;
+        line-height: 20px;
+        cursor: pointer;
+    }
+
+    input[type="checkbox"]:checked + label:before, 
+    input[type="checkbox"]:not(:checked) + label:before,
+    input[type="radio"]:checked + label:before, 
+    input[type="radio"]:not(:checked) + label:before {
+        content: "";
+        position: absolute;
+        left: 0px;
+        top: 0px;
+        width: 18px;
+        height: 18px;
+        border: 1px solid #dddddd;
+        background-color: #ffffff;
+    }
+
+    input[type="checkbox"]:checked + label:before, 
+    input[type="checkbox"]:not(:checked) + label:before {
+        border-radius: 2px;
+    }
+
+    input[type="radio"]:checked + label:before, 
+    input[type="radio"]:not(:checked) + label:before {
+        border-radius: 100%;
+    }
+
+    input[type="checkbox"]:checked + label:after, 
+    input[type="checkbox"]:not(:checked) + label:after, 
+    input[type="radio"]:checked + label:after, 
+    input[type="radio"]:not(:checked) + label:after {
+        content: "";
+        position: absolute;
+        -webkit-transition: all 0.2s ease;
+        -moz-transition: all 0.2s ease;
+        -o-transition: all 0.2s ease;
+        transition: all 0.2s ease;
+    }
+
+    input[type="checkbox"]:checked + label:after, 
+    input[type="checkbox"]:not(:checked) + label:after {
+        left: 3px;
+        top: 4px;
+        width: 10px;
+        height: 5px;
+        border-radius: 1px;
+        border-left: 4px solid #e145a3;
+        border-bottom: 4px solid #e145a3;
+        -webkit-transform: rotate(-45deg);
+        -moz-transform: rotate(-45deg);
+        -o-transform: rotate(-45deg);
+        -ms-transform: rotate(-45deg);
+        transform: rotate(-45deg);
+    }
+
+    input[type="radio"]:checked + label:after, 
+    input[type="radio"]:not(:checked) + label:after {
+        left: 5px;
+        top: 5px;
+        width: 10px;
+        height: 10px;
+        border-radius: 100%;
+        background-color: #e145a3;
+    }
+
+    input[type="checkbox"]:not(:checked) + label:after, 
+    input[type="radio"]:not(:checked) + label:after {
+        opacity: 0;
+    }
+
+    input[type="checkbox"]:checked + label:after, 
+    input[type="radio"]:checked + label:after {
+        opacity: 1;
+    }
+
+    .img{
+        width: 300px;
+        height: 250px;
+        object-fit: cover;
+        border-radius: 10px;
+        margin-bottom: 10px;
+    }
+
+    input[type="file"] {
+        display: none;
+    }
+
+    .photo__input{  
+        height: 20px;
+        width: 75px;
+        background-color: rgb(200, 0, 255);
+        color: white;
+        border-radius: 5px;
+        text-align: center;
+        border: 2px solid rgb(0, 0, 0);
+    }
+
+    .photo__input:hover{
+        cursor: pointer;
+        background-color: rgb(221, 97, 255);
+    }
+
+    .remove__main__photo{
+        font-size: 22px;
+        color: red;
+        margin-left: 8px;
+    }
+
+    .remove__main__photo:hover{
+        cursor: pointer;
+        color: rgb(255, 146, 146);
+    }
+
+    .photos{
+        display: flex;
+        flex-wrap: wrap;
+        flex-direction: row;
+        align-items: center;
+        justify-content: flex-start;
+    }
+
+    .one__photo{
+        width: 100px;
+        height: 100px;
+    }
+
 </style>
