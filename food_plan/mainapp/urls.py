@@ -7,5 +7,5 @@ from rest_framework import routers
 
 
 urlpatterns = [
-    path('', IndexView.as_view()),
+    path('create_menu/', AlgorithmView.as_view()),
 ]

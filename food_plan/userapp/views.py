@@ -13,6 +13,15 @@ from django.shortcuts import get_object_or_404
 from .serializers import *
 
 
+""" Смена пароля """
+    # email = request.user
+    # user = User.objects.get(email=email)
+    # # требования к паролю: 8 символов и больше, не распространён (qwertyui, password не катит),
+    # # а так могут быть только буквы (но не только цифры), необязательны спецсимволы, необязательны заглавные
+    # user.set_password('artik812')
+    # user.save()
+
+
 # этот метод вызывается после регистрации юзера
 @receiver(post_save, sender=User)
 def create_profile(sender, instance, created, **kwargs):
