@@ -57,7 +57,7 @@
                         <div>
                             <p class="ingredients__added__label">Добавленные ингредиенты:</p>
                         
-                                <template v-for="(ingredient, key) in ingrients_dish" :key="key">
+                                <template v-for="(ingredient, key) in ingredients_dish" :key="key">
                                     <div class="ingredients__list__row">
                                         <p class="ingredients__added__list">{{ ingredient["title"] }} - {{ ingredient["count"] }}</p>
                                         <p @click="deleteIngredintFromDish(ingredient)" class="remove__ingredient">X</p>
@@ -165,6 +165,53 @@
                     </template>
                 </template>
             </div>
+            <template v-if="photo_preview_other.length > 0">
+                <p @click="deleteOtherPhoto()" class="remove__main__photo">X</p>
+            </template>
+
+            <!-- Выбор посуды -->
+            <div class="pink">
+                
+                <div class="row">
+                    
+                    <div class="column">
+                        <p class="label__input">Посуда для готовки 🍽️:</p>
+                        <template v-for="(cookware, key) in cookware_response" :key="key">
+                            <input type="checkbox" :id="`cookware${cookware.id}`" @click="chooseCookware(cookware.id, `#cookware${cookware.id}`)">
+                            <label :for="`cookware${cookware.id}`" class="checkbox__label" style="margin-left: 10px; margin-bottom: 10px;">{{ cookware.title }}</label>
+                        </template>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="column">
+                    <p class="label__input">Рецепт 📜:</p>
+                    <textarea placeholder="Напишите рецепт" v-model="dish_recipe" class="textarea__recipe"></textarea>
+                </div>
+            </div>
+            
+            <!-- Создать -->
+            <template v-if="dish__title != '' && dish__description != '' && dish_recipe != ''">
+                <button class="create__dish" @click="createDish()">Создать</button>
+            </template>
+            <template v-else>
+                <button class="create__dish__disabled">Создать</button>
+            </template>
+
+            <!-- Ошибки, если не удалось получить список посуды с бэка -->
+            <div class="errors__cookware">
+                <template v-for="(error, key) in errors_cookware" :key="key">
+                    <p>{{ error }}</p>
+                </template>
+            </div>
+
+            <!-- Ошибки, если не удалось получить список посуды с бэка -->
+            <div class="errors__cookware">
+                <template v-for="(error, key) in errors_dish" :key="key">
+                    <p>{{ error }}</p>
+                </template>
+            </div>
         </div>
     </template>
     <template v-else>
@@ -194,7 +241,12 @@ export default{
             weightgain: false, // для  набора веса
             photo_preview_main: [], // превьюшка для главной фотки
             photo_preview_other: [], // превьюшки для остальных фоток
-
+            cookware_response: [], // список посуды с сервака
+            errors_cookware: [], // ошибки с получением посуды
+            errors_dish: [], // ошибки при создании блюда
+            dish_cookware: [], // выбранная посуда для блюда
+            dish_recipe: "", // сам рецепт
+            warning: false, // предупреждение при создании
 
             ingredient_title: "", // название ингредиента, которое вводит пользователь
             ingredient_count: "", // кол-во ингредиента
@@ -202,7 +254,7 @@ export default{
             ingredient_find: false, // выбран ли ингредиент из списка
             ingredient_response_count: 0, // кол-во результатов поиска
             ingredient_candidate: "", // блюдо, которое юзер выбрал из выпадающего списка
-            ingrients_dish: [], // добавленные ингредиенты в блюдо
+            ingredients_dish: [], // добавленные ингредиенты в блюдо
         }
     },
 
@@ -250,8 +302,29 @@ export default{
     },
 
     // это название страницы в закладках браузера
-    mounted() {
-        document.title = 'Создание рецепта'
+    async mounted() {
+        document.title = 'Создание рецепта';
+
+        // включаю анимацию загрузки
+        let load = document.querySelector('.loading'); 
+        load.style.display = 'block';
+
+        // получаю список всей посуды
+        await axios.get('dish/cookware/').then(response => {
+                let load = document.querySelector('.loading'); load.style.display = 'none';
+                this.cookware_response = response.data;
+            })
+            .catch(error => {
+                this.errors_cookware = [];
+                let load = document.querySelector('.loading'); load.style.display = 'none';
+                if (error.response) {
+                    for (const property in error.response.data) {
+                        this.errors_cookware.push(`${error.response.data[property]}`)
+                    }
+                } else {
+                    this.errors_cookware.push('Что-то пошло не так! Повторите попытку позже)')
+                }
+            })
     },
 
     methods: {
@@ -267,12 +340,12 @@ export default{
             // если мы выбрали ингредиент из списка
             if(this.ingredient_candidate != ""){
                 let ing = {"id": this.ingredient_candidate["id"], "title": this.ingredient_candidate["title"], "count": this.ingredient_count}
-                this.ingrients_dish.push(ing);
+                this.ingredients_dish.push(ing);
             }
             // если в списке не было нашего ингредиента
             else{
                 let ing2 = {"id": "no", "title": this.ingredient_title, "count": this.ingredient_count}
-                this.ingrients_dish.push(ing2);
+                this.ingredients_dish.push(ing2);
             }
 
             this.ingredient_title = "";
@@ -285,13 +358,13 @@ export default{
 
         // удаление ингредиента из блюда
         async deleteIngredintFromDish(ingredient){
-            const index = this.ingrients_dish.indexOf(ingredient);
+            const index = this.ingredients_dish.indexOf(ingredient);
             if (index > -1)  
-                this.ingrients_dish.splice(index, 1); 
+                this.ingredients_dish.splice(index, 1); 
         },
 
         // превьюшка главной фотки
-        photoPreviewMain() {
+        async photoPreviewMain() {
             this.photo_preview_main = [];
             var imagefiles = document.querySelector('#main__photo').files;
             for(var i=0; i < imagefiles.length; i++){
@@ -300,18 +373,25 @@ export default{
         },
 
         // Удаление главной фотографии
-        deleteMainPhoto(){
+        async deleteMainPhoto(){
             var imagefiles = document.querySelector('#main__photo');
             imagefiles.value = "";
             this.photo_preview_main = [];
         },
 
+        // Удаление остальных фотографий
+        async deleteOtherPhoto(){
+            var imagefiles = document.querySelector('#other__photo');
+            imagefiles.value = "";
+            this.photo_preview_other = [];
+        },
+
         // при каждом добавлении фоток
-        checkLength() {
+        async checkLength() {
             // проверяю кол-во фоток (если больше 9, то я всё очищаю)
             var imagefiles = document.querySelector('#other__photo');
             if (imagefiles.files.length > 9) {
-                alert("Можно прикрепить только не больше 9 фото");
+                alert("Можно прикрепить не больше 9 фото");
                 imagefiles.value = "";
                 this.photo_preview_other = [];
             }
@@ -321,11 +401,145 @@ export default{
         },
 
         // превьюшки остальных фоток
-        photoPreviewOther(){
+        async photoPreviewOther(){
             this.photo_preview_other = [];
             var imagefiles = document.querySelector('#other__photo').files;
             for(var i=0; i < imagefiles.length; i++){
                 this.photo_preview_other.push(URL.createObjectURL(imagefiles[i]))
+            }
+        },
+
+        // добавление посуды
+        async chooseCookware(id, input_id){
+            var input = document.querySelector(input_id);
+            if(input.checked){
+                this.dish_cookware.push(id);
+            }
+            else{
+                const index = this.dish_cookware.indexOf(id);
+                if (id > -1)  
+                    this.dish_cookware.splice(index, 1); 
+            }
+        },
+
+        async createDish(){
+            var formData = new FormData();
+            formData.append("title", this.dish_title);
+            formData.append("description", this.dish_description);
+            
+            // если белки/жиры и т.д. не указаны, то я их не добавляю (по дефолту на бэке 0)
+            if(this.proteins == ""){
+                this.warning = true;
+                console.log("белки");
+            }
+            else{
+                formData.append("proteins", this.proteins);
+                
+            }
+
+            if(this.fats == ""){
+                this.warning = true;
+                console.log("жиры");
+            }
+            else{
+                formData.append("fats", this.fats)
+            }
+
+            if(this.carbohydrates == ""){
+                this.warning = true;
+                console.log("углеводы");
+            }
+            else{
+                formData.append("carbohydrates", this.carbohydrates)
+            }
+
+            if(this.calories == ""){
+                this.warning = true;
+                console.log("калории");
+            }
+            else{
+                formData.append("calories", this.calories)
+            }
+            
+            formData.append("breakfast", this.breakfast);
+            formData.append("lunch", this.lunch);
+            formData.append("dinner", this.dinner);
+            formData.append("usualdiet", this.usualdiet);
+            formData.append("weightloss", this.weightloss);
+            formData.append("weightgain", this.weightgain);
+            formData.append("recipe", this.dish_recipe);
+            if(this.time == ""){
+                this.warning = true;
+                console.log("время");
+            }
+            else{
+                formData.append("time", this.time)
+            }
+            formData.append("cookware", this.dish_cookware);
+            formData.append("ingredients", this.ingredients_dish);
+
+            // фотки
+            var mainPhoto = document.querySelector('#main__photo').files[0];
+            if(mainPhoto){
+                formData.append("mainphoto", mainPhoto);
+            }
+
+            var otherPhoto = document.querySelector('#other__photo').files;
+            for(var i=0; i < otherPhoto.length; i++){
+                formData.append(`photo${i+1}`, otherPhoto[i]);
+            }
+
+            if(this.ingredients_dish.length < 1){
+                this.warning = true;
+                console.log("ингредиенты");
+            }
+
+            // предупреждение
+            if(this.warning){
+                if(confirm('Вы заполнили не все поля. Хотите продолжить?')) {
+                    // включаю анимацию загрузки
+                    let load = document.querySelector('.loading'); 
+                    load.style.display = 'block';
+
+                    // создаю блюдо
+                    await axios.post('dish/create/', formData).then(response => {
+                        let load = document.querySelector('.loading'); load.style.display = 'none';
+                        console.log(response.data);
+                    })
+                    .catch(error => {
+                        this.errors_dish = [];
+                        let load = document.querySelector('.loading'); load.style.display = 'none';
+                        if (error.response) {
+                            for (const property in error.response.data) {
+                                this.errors_dish.push(`${error.response.data[property]}`)
+                            }
+                        } else {
+                            this.errors_dish.push('Что-то пошло не так! Повторите попытку позже)')
+                        }
+                    })
+                } 
+            }
+            else{
+                // включаю анимацию загрузки
+                let load = document.querySelector('.loading'); 
+                load.style.display = 'block';
+
+                // создаю блюдо
+                await axios.post('dish/create/', formData).then(response => {
+                    let load = document.querySelector('.loading'); load.style.display = 'none';
+                    console.log(response.data);
+                })
+                .catch(error => {
+                    this.errors_dish = [];
+                    let load = document.querySelector('.loading'); load.style.display = 'none';
+                    if (error.response) {
+                        for (const property in error.response.data) {
+                            this.errors_dish.push(`${error.response.data[property]}`)
+                        }
+                    } else {
+                        this.errors_dish.push('Что-то пошло не так! Повторите попытку позже)')
+                    }
+                })
             }
         },
     },      
@@ -691,7 +905,6 @@ export default{
     .remove__main__photo{
         font-size: 22px;
         color: red;
-        margin-left: 8px;
     }
 
     .remove__main__photo:hover{
@@ -705,11 +918,60 @@ export default{
         flex-direction: row;
         align-items: center;
         justify-content: flex-start;
+        width: 440px;
     }
 
     .one__photo{
         width: 100px;
         height: 100px;
+        border-radius: 5px;
+        margin: 5px;
+        object-fit: cover;
+    }
+
+    .errors__cookware{
+        color: red;
+    }
+
+    .textarea__recipe{
+        width: 546px; 
+        height: 200px; 
+        margin: 10px;
+        font-size: 20px;
+        border-radius: 5px;
+        border: 2px solid rgb(0, 0, 0);
+        resize: vertical;
+    }
+
+    .create__dish{
+        width: 80px;
+        height: 35px;
+        background: linear-gradient(#3150ff, rgb(255, 107, 132));
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        border: 1px solid black;
+        box-shadow: 3px 3px 3px rgb(0, 0, 0, 0.3);
+    }
+
+    .create__dish:hover{
+        background: linear-gradient(#7086ff, rgb(255, 150, 167));
+        cursor: pointer;
+    }
+
+    .create__dish__disabled{
+        width: 80px;
+        height: 35px;
+        background: linear-gradient(rgb(188, 198, 255), rgb(255, 217, 223));
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        border: 1px solid black;
+        box-shadow: 3px 3px 3px rgb(0, 0, 0, 0.3);
     }
 
 </style>
