@@ -91,7 +91,9 @@ export default{
 
             var formData = new FormData();
             formData.append("diet", this.diet);
-            formData.append("cookware", this.menu_cookware);
+            // formData.append("cookware", this.menu_cookware);
+            for(let i=0; i < this.menu_cookware.length; i++)
+                formData.append("cookware", this.menu_cookware[i]);
 
             // создаю меню
             await axios.post('create_menu/', formData).then(response => {

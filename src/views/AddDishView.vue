@@ -192,7 +192,7 @@
             </div>
             
             <!-- Создать -->
-            <template v-if="dish__title != '' && dish__description != '' && dish_recipe != ''">
+            <template v-if="dish_title != '' && dish_description != '' && dish_recipe != ''">
                 <button class="create__dish" @click="createDish()">Создать</button>
             </template>
             <template v-else>
@@ -304,6 +304,11 @@ export default{
     // это название страницы в закладках браузера
     async mounted() {
         document.title = 'Создание рецепта';
+
+        if(this.$store.state.isAuthenticated==false){
+            // перенаправляю его на главную страницу
+            this.$router.push('/');
+        }
 
         // включаю анимацию загрузки
         let load = document.querySelector('.loading'); 
@@ -422,6 +427,7 @@ export default{
             }
         },
 
+        // создание блюда
         async createDish(){
             var formData = new FormData();
             formData.append("title", this.dish_title);
@@ -430,7 +436,6 @@ export default{
             // если белки/жиры и т.д. не указаны, то я их не добавляю (по дефолту на бэке 0)
             if(this.proteins == ""){
                 this.warning = true;
-                console.log("белки");
             }
             else{
                 formData.append("proteins", this.proteins);
@@ -439,7 +444,6 @@ export default{
 
             if(this.fats == ""){
                 this.warning = true;
-                console.log("жиры");
             }
             else{
                 formData.append("fats", this.fats)
@@ -447,7 +451,6 @@ export default{
 
             if(this.carbohydrates == ""){
                 this.warning = true;
-                console.log("углеводы");
             }
             else{
                 formData.append("carbohydrates", this.carbohydrates)
@@ -455,7 +458,6 @@ export default{
 
             if(this.calories == ""){
                 this.warning = true;
-                console.log("калории");
             }
             else{
                 formData.append("calories", this.calories)
@@ -470,13 +472,29 @@ export default{
             formData.append("recipe", this.dish_recipe);
             if(this.time == ""){
                 this.warning = true;
-                console.log("время");
             }
             else{
                 formData.append("time", this.time)
             }
-            formData.append("cookware", this.dish_cookware);
-            formData.append("ingredients", this.ingredients_dish);
+
+            if(this.dish_cookware.length > 0){
+                for(let i=0; i < this.dish_cookware.length; i++)
+                    formData.append("cookware", this.dish_cookware[i]);
+            }
+            else{
+                this.warning = true;
+            }
+            
+            // тут сложная отправка списка словарей
+            if(this.ingredients_dish.length > 0){
+                for(let i=0; i < this.ingredients_dish.length; i++)
+                    formData.append("ingredients", JSON.stringify({"id": this.ingredients_dish[i]["id"], "title": this.ingredients_dish[i]["title"], "count": this.ingredients_dish[i]["count"]}));
+          
+            }
+            else{
+                this.warning = true; 
+            }
+            
 
             // фотки
             var mainPhoto = document.querySelector('#main__photo').files[0];
@@ -489,10 +507,7 @@ export default{
                 formData.append(`photo${i+1}`, otherPhoto[i]);
             }
 
-            if(this.ingredients_dish.length < 1){
-                this.warning = true;
-                console.log("ингредиенты");
-            }
+            
 
             // предупреждение
             if(this.warning){
@@ -505,6 +520,9 @@ export default{
                     await axios.post('dish/create/', formData).then(response => {
                         let load = document.querySelector('.loading'); load.style.display = 'none';
                         console.log(response.data);
+
+                        // перенаправляю его на главную страницу
+                        this.$router.push('/');
                     })
                     .catch(error => {
                         this.errors_dish = [];
@@ -528,6 +546,9 @@ export default{
                 await axios.post('dish/create/', formData).then(response => {
                     let load = document.querySelector('.loading'); load.style.display = 'none';
                     console.log(response.data);
+
+                    // перенаправляю его на главную страницу
+                    this.$router.push('/');
                 })
                 .catch(error => {
                     this.errors_dish = [];
