@@ -74,8 +74,11 @@ class DishCreateView(APIView):
         dish = Dish.objects.get(pk=serializer.data["id"])
 
         # после того, как создали блюдо, добавляем ингредиенты
-        for ingredient in request.data["ingredients"]:
-            try:
+        try:
+            for ingredient in request.data.getlist("ingredients"):
+                # vue отправляет словарь ввиде строки, преобразую её в питоновский словарь
+                ingredient = eval(ingredient)
+
                 # Если у ингредиента нет айдишника
                 if ingredient["id"] == "no":
                     # то я сначала создаю его
@@ -94,9 +97,30 @@ class DishCreateView(APIView):
                     # добавляю в блюдо
                     dishingredient = DishIngredients(dish=dish, ingredient=ing, count=ingredient["count"])
                     dishingredient.save()
+        except:
+            try:
+                for ingredient in request.data["ingredients"]:
+                    # Если у ингредиента нет айдишника
+                    if ingredient["id"] == "no":
+                        # то я сначала создаю его
+                        new_ingredient = Ingredient(title=ingredient["title"].strip().lower(),
+                                                    other_names=ingredient["title"].strip().lower())
+                        new_ingredient.save()
 
+                        # а потом добавляю в блюдо
+                        dishingredient = DishIngredients(dish=dish, ingredient=new_ingredient, count=ingredient["count"])
+                        dishingredient.save()
+
+                    # если у ингредиента есть айдишник
+                    else:
+                        ing = get_object_or_404(Ingredient, pk=ingredient["id"])
+                        # ing = Ingredient.objects.get(id=ingredient["id"])
+
+                        # добавляю в блюдо
+                        dishingredient = DishIngredients(dish=dish, ingredient=ing, count=ingredient["count"])
+                        dishingredient.save()
             except:
-                pass # на всякий случай, чтобы краша не было
+                pass
 
         # json, который я жду (лайки, дизлайки, отзывы, логично, пустые. Modercheck по дефолту False)
         """

@@ -16,6 +16,7 @@ def get_price(ingredient_title: str) -> float:
         prices = soup.find_all("div", {"class": "price-new"})
         try:
             price = prices[0].text.replace(" ₽", "")
+            price = price.replace("Цена", "")
         except:
             return -1
 

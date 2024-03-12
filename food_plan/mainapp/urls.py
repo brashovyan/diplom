@@ -8,4 +8,5 @@ from rest_framework import routers
 
 urlpatterns = [
     path('create_menu/', AlgorithmView.as_view()),
+    path('get_menu/', GetMenuView.as_view()),
 ]

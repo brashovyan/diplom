@@ -1,28 +1,28 @@
 from django.db import models
 from django.contrib.auth import get_user_model
 User = get_user_model()
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 from dishapp.models import Dish
 
 
 # дата понедельника
 def get_monday():
     # если сегодня не понедельник
-    if(datetime.today().weekday() != 0):
+    if(date.today().weekday() != 0):
         # дата понедельника = сегодня - дней(номер дня недели - 1) P.s. в питоне дни недели от 0 (пн) до 6 (вс)
-        return datetime.today() - timedelta(days=datetime.today().weekday())
+        return date.today() - timedelta(days=date.today().weekday())
     else:
-        return datetime.today()
+        return date.today()
 
 
 # дата воскресенья
 def get_sunday():
     # если сегодня не воскресенье
-    if(datetime.today().weekday() != 6):
+    if(date.today().weekday() != 6):
         # дата воскресенья = сегодня + дней(6 - номер дня недели) P.s. в питоне дни недели от 0 (пн) до 6 (вс)
-        return datetime.today() + timedelta(days=6-datetime.today().weekday())
+        return date.today() + timedelta(days=6-date.today().weekday())
     else:
-        return datetime.today()
+        return date.today()
 
 
 # Меню
