@@ -10,13 +10,21 @@
             <!-- Название, описание -->
             <div class="row">
                 <p class="label__input">Название рецепта:</p>
-                <input type="text" placeholder="Название рецепта" v-model="dish_title" class="text__input">
+                <input type="text" placeholder="Название блюда (обязательно)" v-model="dish_title" class="text__input" required>
             </div>
 
             <div class="row__textarea">
                 <p class="label__input">Краткое описание:</p>
-                <textarea placeholder="Краткое описание" v-model="dish_description" class="textarea__input"></textarea>
+                <textarea placeholder="Краткое описание (обязательно)" v-model="dish_description" class="textarea__input" required></textarea>
+                
             </div>
+            <p class="label__input">Подсказка:</p>
+            <div class="row">
+                <p style="margin-left: 10px;">Указывайте кол-во ингредиентов для одной порции. Расчёт КБЖУ так же идёт на одну порцию. Точнее всего будет, если указывать в граммах. Вы можете самостоятельно указать КБЖУ блюда.</p>
+            </div>
+            <div class="row">
+            <p style="margin-left: 10px;">Начните вводить название ингредиента, и выберите его в выпадающем списке. Если ничего не нашлось, то вы всё равно можете добавить этот ингредиент, но он не будет учитываться при подсчёте КБЖУ.</p>
+            </div>   
             
             <!-- Ингредиенты -->
             <div class="pink">
@@ -31,16 +39,21 @@
                             <p class="ingredients__label">Введите название ингредиента:</p>
                             <input type="text" placeholder="Название игредиента" v-model="ingredient_title" class="ingredient__input">
                             <template v-for="(ingredient_list, key_list) in ingredient_response" :key="key_list">
-                                <template v-for="(ingredient_json, key_json) in ingredient_list" :key="key_json">
-                                    <template v-for="(ingredient, key) in ingredient_json" :key="key">
-                                        <p class="ingredient__result" @click="addIngredientCandidate(ingredient, key)">{{ ingredient }}</p>
-                                    </template>
+                                <template v-for="(ingredient, key) in ingredient_list" :key="key">
+                                    <p class="ingredient__result" @click="addIngredientCandidate(ingredient.title, ingredient.id, ingredient.calories, ingredient.proteins, ingredient.fats, ingredient.carbohydrates)">{{ ingredient.title }}</p>
                                 </template>
                             </template>
                         </div>
                         
                         <div class="ingredient__add">
-                            <input type="text" placeholder="Кол-во" v-model="ingredient_count" maxlength="10" class="ingredient__count">
+                            <input type="number" placeholder="Кол-во" v-model="ingredient_count" min=0 class="ingredient__count">
+                            <select v-model="ingredient_unit" class="ingredient__unit">
+                                <option value="gr" selected>Гр</option>
+                                <option value="sht">Шт</option>
+                                <option value="st_losh">Ст. ложка</option>
+                                <option value="ch_losh">Ч. ложка</option>
+                                <option value="ml">Мл</option>
+                            </select>
                             <template v-if="ingredient_find == true">
                                 <button id="add__ing__btn" @click="addIngredientDish()">Добавить</button>
                             </template>
@@ -187,7 +200,7 @@
             <div class="row">
                 <div class="column">
                     <p class="label__input">Рецепт 📜:</p>
-                    <textarea placeholder="Напишите рецепт" v-model="dish_recipe" class="textarea__recipe"></textarea>
+                    <textarea placeholder="Напишите рецепт (обязательно)" v-model="dish_recipe" class="textarea__recipe" required></textarea>
                 </div>
             </div>
             
@@ -228,10 +241,10 @@ export default{
         return {
             dish_title: "", // название блюда
             dish_description: "", // краткое описани
-            calories: "", // калории
-            proteins: "", // белки
-            fats: "", // жиры
-            carbohydrates: "", // углеводы
+            calories: 0, // калории
+            proteins: 0, // белки
+            fats: 0, // жиры
+            carbohydrates: 0, // углеводы
             time: "", // время готовки
             breakfast: false, // для завтрака
             lunch: false, // для обеда
@@ -249,11 +262,13 @@ export default{
             warning: false, // предупреждение при создании
 
             ingredient_title: "", // название ингредиента, которое вводит пользователь
-            ingredient_count: "", // кол-во ингредиента
+            ingredient_count: "0", // кол-во ингредиента
+            ingredient_unit: "gr", // единица измерения ингредиента
             ingredient_response: {"result": []}, // результат поиска игредиента
             ingredient_find: false, // выбран ли ингредиент из списка
             ingredient_response_count: 0, // кол-во результатов поиска
             ingredient_candidate: "", // блюдо, которое юзер выбрал из выпадающего списка
+            ingredient_candidates: [], // список добавленных кандидатов
             ingredients_dish: [], // добавленные ингредиенты в блюдо
         }
     },
@@ -334,27 +349,105 @@ export default{
 
     methods: {
         // выбор ингредиента из списка
-        async addIngredientCandidate(ingredient, key){
+        async addIngredientCandidate(ingredient, id, calories, proteins, fats, carbohydrates){
             this.ingredient_title = ingredient; 
             this.ingredient_find = true;
-            this.ingredient_candidate = {"id": key, "title": ingredient};
+            this.ingredient_candidate = {"id": id, "title": ingredient, "calories": calories, "proteins": proteins, "fats": fats, "carbohydrates": carbohydrates};
         },
 
         // добавление ингредиента в блюдо
         async addIngredientDish(){
             // если мы выбрали ингредиент из списка
             if(this.ingredient_candidate != ""){
-                let ing = {"id": this.ingredient_candidate["id"], "title": this.ingredient_candidate["title"], "count": this.ingredient_count}
-                this.ingredients_dish.push(ing);
+
+                // нельзя добавлять несколько одинаковых ингредиентов
+                var flag = true;
+                for(let ingredient of this.ingredients_dish){
+                    if(ingredient["id"]==this.ingredient_candidate["id"]){
+                        flag = false;
+                    }
+                }
+
+                if(flag==true){
+                    // пытаемся считать кбжу
+                    var ing_unit = "";
+                    if(this.ingredient_unit=="gr"){
+                        ing_unit = "гр";
+                        this.calories = (Number(this.calories) + ((Number(this.ingredient_count) / 100) * Number(this.ingredient_candidate["calories"]))).toFixed(2);
+                        this.proteins = (Number(this.proteins) + ((Number(this.ingredient_count) / 100) * Number(this.ingredient_candidate["proteins"]))).toFixed(2);
+                        this.fats = (Number(this.fats) + ((Number(this.ingredient_count) / 100) * Number(this.ingredient_candidate["fats"]))).toFixed(2);
+                        this.carbohydrates = (Number(this.carbohydrates) + ((Number(this.ingredient_count) / 100) * Number(this.ingredient_candidate["carbohydrates"]))).toFixed(2);
+                    }
+                    else if(this.ingredient_unit=="sht"){
+                        ing_unit = "шт";
+                        this.calories = (Number(this.calories) + ((Number(this.ingredient_count) * 0.9) * Number(this.ingredient_candidate["calories"]))).toFixed(2);
+                        this.proteins = (Number(this.proteins) + ((Number(this.ingredient_count) * 0.9) * Number(this.ingredient_candidate["proteins"]))).toFixed(2);
+                        this.fats = (Number(this.fats) + ((Number(this.ingredient_count) * 0.9) * Number(this.ingredient_candidate["fats"]))).toFixed(2);
+                        this.carbohydrates = (Number(this.carbohydrates) + ((Number(this.ingredient_count) * 0.9) * Number(this.ingredient_candidate["carbohydrates"]))).toFixed(2);
+                    }
+                    else if(this.ingredient_unit=="st_losh"){
+                        ing_unit = "ст. ложка";
+                        this.calories = (Number(this.calories) + ((Number(this.ingredient_count) * 0.25) * Number(this.ingredient_candidate["calories"]))).toFixed(2);
+                        this.proteins = (Number(this.proteins) + ((Number(this.ingredient_count) * 0.25) * Number(this.ingredient_candidate["proteins"]))).toFixed(2);
+                        this.fats = (Number(this.fats) + ((Number(this.ingredient_count) * 0.25) * Number(this.ingredient_candidate["fats"]))).toFixed(2);
+                        this.carbohydrates = (Number(this.carbohydrates) + ((Number(this.ingredient_count) * 0.25) * Number(this.ingredient_candidate["carbohydrates"]))).toFixed(2);
+                    }
+                    else if(this.ingredient_unit=="ch_losh"){
+                        ing_unit = "ч. ложка";
+                        this.calories = (Number(this.calories) + ((Number(this.ingredient_count) * 0.08) * Number(this.ingredient_candidate["calories"]))).toFixed(2);
+                        this.proteins = (Number(this.proteins) + ((Number(this.ingredient_count) * 0.08) * Number(this.ingredient_candidate["proteins"]))).toFixed(2);
+                        this.fats = (Number(this.fats) + ((Number(this.ingredient_count) * 0.08) * Number(this.ingredient_candidate["fats"]))).toFixed(2);
+                        this.carbohydrates = (Number(this.carbohydrates) + ((Number(this.ingredient_count) * 0.08) * Number(this.ingredient_candidate["carbohydrates"]))).toFixed(2);
+                    }
+                    else if(this.ingredient_unit=="ml"){
+                        ing_unit = "мл";
+                        this.calories = (Number(this.calories) + ((Number(this.ingredient_count) / 100) * Number(this.ingredient_candidate["calories"]))).toFixed(2);
+                        this.proteins = (Number(this.proteins) + ((Number(this.ingredient_count) / 100) * Number(this.ingredient_candidate["proteins"]))).toFixed(2);
+                        this.fats = (Number(this.fats) + ((Number(this.ingredient_count) / 100) * Number(this.ingredient_candidate["fats"]))).toFixed(2);
+                        this.carbohydrates = (Number(this.carbohydrates) + ((Number(this.ingredient_count) / 100) * Number(this.ingredient_candidate["carbohydrates"]))).toFixed(2);
+                    }
+                    this.ingredient_candidates.push(this.ingredient_candidate);
+
+               
+                    let ing = {"id": this.ingredient_candidate["id"], "title": this.ingredient_candidate["title"], "count": `${this.ingredient_count} ${ing_unit}`}
+                    this.ingredients_dish.push(ing);
+                }
+                else{
+                    alert("Этот ингредиент уже добавлен!");
+                }
             }
             // если в списке не было нашего ингредиента
             else{
-                let ing2 = {"id": "no", "title": this.ingredient_title, "count": this.ingredient_count}
-                this.ingredients_dish.push(ing2);
+                // нельзя добавлять несколько одинаковых ингредиентов
+                var flag2 = true;
+                for(let ingredient of this.ingredients_dish){
+                    if(ingredient["title"].toLowerCase() == this.ingredient_title.toLowerCase()){
+                        flag2 = false;
+                    }
+                }
+
+                if(flag2==true){
+                    var ing_unit2 = "";
+                    if(this.ingredient_unit=="gr")
+                        ing_unit2 = "гр";
+                    else if(this.ingredient_unit=="sht")
+                        ing_unit2 = "шт";
+                    else if(this.ingredient_unit=="st_losh")
+                        ing_unit2 = "ст. ложка";
+                    else if(this.ingredient_unit=="ch_losh")
+                        ing_unit2 = "ч. ложка";
+                    else if(this.ingredient_unit=="ml")
+                        ing_unit2 = "мл";
+                    let ing2 = {"id": "no", "title": this.ingredient_title, "count": `${this.ingredient_count} ${ing_unit2}`}
+                    this.ingredients_dish.push(ing2);
+                }
+                else{
+                    alert("Этот ингредиент уже добавлен!");
+                }
             }
 
             this.ingredient_title = "";
-            this.ingredient_count = "";
+            this.ingredient_count = "0";
             this.ingredient_find = false;
             this.ingredient_candidate = "";
             this.ingredient_response = {"result": []};
@@ -364,8 +457,66 @@ export default{
         // удаление ингредиента из блюда
         async deleteIngredintFromDish(ingredient){
             const index = this.ingredients_dish.indexOf(ingredient);
-            if (index > -1)  
-                this.ingredients_dish.splice(index, 1); 
+            if (index > -1){
+                var id = this.ingredients_dish[index]["id"];
+                var count_list = this.ingredients_dish[index]["count"].split(" ");
+                var count = 0;
+                if(count_list[0] == ""){
+                    count = 0;
+                }
+                else{
+                    count = count_list[0];
+                }
+                this.ingredients_dish.splice(index, 1);
+                // отнимаю кбжу 
+                var cand = "";
+                for(var candidate of this.ingredient_candidates){
+                    if(id == candidate["id"]){
+                        cand = candidate;
+                        if(count_list[1]=="гр"){
+                            this.calories = (Number(this.calories) - ((Number(count) / 100) * Number(candidate["calories"]))).toFixed(2);
+                            this.proteins = (Number(this.proteins) - ((Number(count) / 100) * Number(candidate["proteins"]))).toFixed(2);
+                            this.fats = (Number(this.fats) - ((Number(count) / 100) * Number(candidate["fats"]))).toFixed(2);
+                            this.carbohydrates = (Number(this.carbohydrates) - ((Number(count) / 100) * Number(candidate["carbohydrates"]))).toFixed(2);
+                        }
+                        else if(count_list[1]=="шт"){
+                            this.calories = (Number(this.calories) - ((Number(count) * 0.9) * Number(candidate["calories"]))).toFixed(2);
+                            this.proteins = (Number(this.proteins) - ((Number(count) * 0.9) * Number(candidate["proteins"]))).toFixed(2);
+                            this.fats = (Number(this.fats) - ((Number(count) * 0.9) * Number(candidate["fats"]))).toFixed(2);
+                            this.carbohydrates = (Number(this.carbohydrates) - ((Number(count) * 0.9) * Number(candidate["carbohydrates"]))).toFixed(2);
+                        }
+                        else if(count_list[1]=="ст."){
+                            this.calories = (Number(this.calories) - ((Number(count) * 0.25) * Number(candidate["calories"]))).toFixed(2);
+                            this.proteins = (Number(this.proteins) - ((Number(count) * 0.25) * Number(candidate["proteins"]))).toFixed(2);
+                            this.fats = (Number(this.fats) - ((Number(count) * 0.25) * Number(candidate["fats"]))).toFixed(2);
+                            this.carbohydrates = (Number(this.carbohydrates) - ((Number(count) * 0.25) * Number(candidate["carbohydrates"]))).toFixed(2);
+                        }
+                        else if(count_list[1]=="ч."){
+                            this.calories = (Number(this.calories) - ((Number(count) * 0.08) * Number(candidate["calories"]))).toFixed(2);
+                            this.proteins = (Number(this.proteins) - ((Number(count) * 0.08) * Number(candidate["proteins"]))).toFixed(2);
+                            this.fats = (Number(this.fats) - ((Number(count) * 0.08) * Number(candidate["fats"]))).toFixed(2);
+                            this.carbohydrates = (Number(this.carbohydrates) - ((Number(count) * 0.08) * Number(candidate["carbohydrates"]))).toFixed(2);
+                        }
+                        else if(count_list[1]=="мл"){
+                            this.calories = (Number(this.calories) - ((Number(count) / 100) * Number(candidate["calories"]))).toFixed(2);
+                            this.proteins = (Number(this.proteins) - ((Number(count) / 100) * Number(candidate["proteins"]))).toFixed(2);
+                            this.fats = (Number(this.fats) - ((Number(count) / 100) * Number(candidate["fats"]))).toFixed(2);
+                            this.carbohydrates = (Number(this.carbohydrates) - ((Number(count) / 100) * Number(candidate["carbohydrates"]))).toFixed(2);
+                        }
+                    }
+                }
+                const index2 = this.ingredient_candidates.indexOf(cand);
+                if(index2 > -1){
+                    this.ingredient_candidates.splice(index, 1);
+                }
+
+                if(this.ingredient_candidates.length < 1){
+                    this.calories = 0;
+                    this.proteins = 0;
+                    this.fats = 0;
+                    this.carbohydrates = 0;
+                }
+            }
         },
 
         // превьюшка главной фотки
@@ -674,20 +825,30 @@ export default{
 
     .ingredient__input{
         margin-left: 10px;
-        margin-right: 10px;
+        margin-right: 0px;
         margin-top: 10px;
         font-size: 20px;
         border-radius: 5px;
-        width: 300px;
+        width: 280px;
     }
 
     .ingredient__count{
         margin-left: 10px;
         margin-right: 10px;
-        margin-top: 33px;
+        margin-top: 33.5px;
         font-size: 20px;
         border-radius: 5px;
-        width: 100px;
+        width: 60px;
+    }
+
+    .ingredient__unit{
+        border-radius: 5px;
+        border: 2px solid rgb(0, 0, 0);
+        font-size: 16px;
+        width: 80px;
+        margin-top: 35.5px;
+        margin-right: 10px;
+        margin-left: 10px;
     }
 
     .ingredients__column{
@@ -698,7 +859,7 @@ export default{
     .ingredient__result{
         margin-left: 11px;
         margin-right: 10px;
-        width: 300px;
+        width: 280px;
         background-color: white;
     }
     

@@ -35,6 +35,14 @@
                     <input type="radio" v-model="sex" name="sex" placeholder="Женский" value="F" id="female">
                     <label for="female">Женский</label>
                 </div>
+                <p class="p__placeholder">Физическая активность:</p>
+                <select v-model="physical_activity" class="physical__activity">
+                    <option value="minimum">Минимальные нагрузки (сидячая работа)</option>
+                    <option value="training3" selected>Легкие тренировки или пешие прогулки 1-3 раза в неделю</option>
+                    <option value="training5">Тренировки или работа средней тяжести 3-5 раз в неделю</option>
+                    <option value="intensetraining5">Тренировки или тяжелая работа 5-7 раз в неделю</option>
+                    <option value="maximum">Тренировки или тяжелая работа каждый день</option>
+                </select>
                 <p class="p__placeholder">Выберите фото профиля (необязательно):</p>
                 <div class="div__photo">
                     <label for="file" class="photo__label">Выбрать...</label>
@@ -89,6 +97,7 @@ export default {
             weight: "",
             date: "",
             sex: "M",
+            physical_activity: "training3",
             photoPreviews: [],
             nonfields: [],
             token: "",
@@ -139,6 +148,7 @@ export default {
                 formData.append("weight", this.weight);
                 formData.append("sex", this.sex);
                 formData.append("date_of_birth", this.date);
+                formData.append("physical_activity", this.physical_activity);
                 
                 var imagefile = document.querySelector('#file').files[0];
                 if(imagefile){
@@ -387,6 +397,15 @@ export default {
         padding-bottom: 10px;
     }
 
+    .physical__activity{
+        border-radius: 5px;
+        border: 2px solid rgb(0, 0, 0);
+        width: 453px;
+        font-size: 15px;
+        margin-bottom: 10px;
+        box-shadow: 3px 3px 3px rgb(0, 0, 0, 0.4);
+    }
+
     @media (max-width: 1000px){
         .main__elements{
             width: 90%;
@@ -399,6 +418,11 @@ export default {
 
         .email{
             width: 95%;
+        }
+
+        .physical__activity{
+            width: 96%;
+            font-size: 14px;
         }
     }
 
