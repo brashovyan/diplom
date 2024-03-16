@@ -30,6 +30,7 @@ class Menu(models.Model):
     owner = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name='Пользователь', help_text="Кому принадлежит меню", null=False)
     datestart = models.DateField(null=False, default=get_monday())
     dateend = models.DateField(null=False, default=get_sunday())
+    info = models.CharField(max_length=1000, null=True, blank=True, verbose_name='Информация', help_text="Дополнительная информация")
     br_mon = models.ForeignKey(Dish, on_delete=models.CASCADE, verbose_name='Блюдо завтрак пн', help_text="Блюдо завтрак пн", null=False, related_name='br_mon')
     lu_mon = models.ForeignKey(Dish, on_delete=models.CASCADE, verbose_name='Блюдо обед пн', help_text="Блюдо обед пн", null=False, related_name='lu_mon')
     dn_mon = models.ForeignKey(Dish, on_delete=models.CASCADE, verbose_name='Блюдо ужин пн', help_text="Блюдо ужин пн", null=False, related_name='dn_mon')

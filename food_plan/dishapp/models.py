@@ -10,6 +10,10 @@ class Ingredient(models.Model):
     last_update_price = models.DateField(null=True, blank=True)
     other_names = models.TextField(verbose_name="Другие названия", help_text="Введите другие названия", null=True)
     users_ban = models.ManyToManyField(User, help_text='Выберите пользователей, которые не хотят видеть этот ингредиент в блюдах', verbose_name='Пользователи, которые не хотят видеть этот ингредиент в блюдах', blank=True, related_name='user_ban_ingredient')
+    calories = models.FloatField(null=True, blank=True, default=0, verbose_name="Калории (на 100 гр)", help_text="Введите калории (на 100 гр)")
+    proteins = models.FloatField(null=True, blank=True, default=0, verbose_name="Белки (на 100 гр)", help_text="Введите белки в гр (на 100 гр)")
+    fats = models.FloatField(null=True, blank=True, default=0, verbose_name="Жиры (на 100 гр)", help_text="Введите жиры в гр (на 100 гр)")
+    carbohydrates = models.FloatField(null=True, blank=True, default=0, verbose_name="Углеводы (на 100 гр)", help_text="Введите углеводы в гр (на 100 гр)")
     objects = models.Manager()
 
     def __str__(self):

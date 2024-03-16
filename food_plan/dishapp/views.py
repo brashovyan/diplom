@@ -372,7 +372,7 @@ class IngredientSearchView(APIView):
             ingredients = Ingredient.objects.filter(other_names__contains = title.strip().lower())
             if ingredients:
                 for ingredient in ingredients:
-                    ingredients_list.append({f"{ingredient.id}": f"{ingredient.title}"})
+                    ingredients_list.append({"id": f"{ingredient.id}", "title": f"{ingredient.title}", "calories": f"{ingredient.calories}", "proteins": f"{ingredient.proteins}", "fats": f"{ingredient.fats}", "carbohydrates": f"{ingredient.carbohydrates}"})
         return Response({"result": ingredients_list})
 
 

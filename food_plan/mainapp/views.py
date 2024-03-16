@@ -98,15 +98,27 @@ def DayGeneration(breakfasts, lunchs, dinners, calories, proteins, fats, carbohy
     top_6 = [] # не угадал калории, и ёще две ошибки
     top_7 = [] # вообще ничего не угадал
     count = 0
+    combinations = []
 
-    while count < 100:
+    while count < 500:
         count += 1
 
         # беру рандомные завтрак, обед и ужин
-        # потом надо будет сделать, чтобы сочетания не повторялись и блюда не были одинаковыми (например [12, 12, 42])
-        breakfast = random.choice(breakfasts)
-        lunch = random.choice(lunchs)
-        dinner = random.choice(dinners)
+        count2 = 0
+        while count2 < 100:
+            count2 += 1
+            breakfast = random.choice(breakfasts)
+            lunch = random.choice(lunchs)
+            dinner = random.choice(dinners)
+            combination = [lunch.id, breakfast.id, dinner.id]
+
+            # все блюда разные
+            if breakfast.id != lunch.id and breakfast.id != dinner.id and lunch.id != dinner.id:
+                # такого сочетания ещё не было
+                if combination not in combinations:
+                    combinations.append(combination)
+                    break
+            combinations.append(combination)
 
         # считаю суммарные кбжу
         calories_sum = breakfast.calories + lunch.calories + dinner.calories
@@ -131,8 +143,6 @@ def DayGeneration(breakfasts, lunchs, dinners, calories, proteins, fats, carbohy
 
         # идеальное совпадение
         if coincidences == 4:
-            print("Идеально совпадение!")
-            print(f"{calories_sum}, {proteins_sum}, {fats_sum}, {carbohydrates_sum}")
             menu_list.append(breakfast)
             menu_list.append(lunch)
             menu_list.append(dinner)
@@ -214,56 +224,42 @@ def DayGeneration(breakfasts, lunchs, dinners, calories, proteins, fats, carbohy
 
 
     if len(top_1) > 0:
-        print("Топ 1!")
-        print(f"{top_1[0].calories + top_1[1].calories + top_1[2].calories}, {top_1[0].proteins + top_1[1].proteins + top_1[2].proteins}, {top_1[0].fats + top_1[1].fats + top_1[2].fats}, {top_1[0].carbohydrates + top_1[1].carbohydrates + top_1[2].carbohydrates}")
         menu_list.append(top_1[0])
         menu_list.append(top_1[1])
         menu_list.append(top_1[2])
         return menu_list
 
     elif len(top_2) > 0:
-        print("Топ 2!")
-        print(f"{top_2[0].calories + top_2[1].calories + top_2[2].calories}, {top_2[0].proteins + top_2[1].proteins + top_2[2].proteins}, {top_2[0].fats + top_2[1].fats + top_2[2].fats}, {top_2[0].carbohydrates + top_2[1].carbohydrates + top_2[2].carbohydrates}")
         menu_list.append(top_2[0])
         menu_list.append(top_2[1])
         menu_list.append(top_2[2])
         return menu_list
 
     elif len(top_3) > 0:
-        print("Топ 3!")
-        print(f"{top_3[0].calories + top_3[1].calories + top_3[2].calories}, {top_3[0].proteins + top_3[1].proteins + top_3[2].proteins}, {top_3[0].fats + top_3[1].fats + top_3[2].fats}, {top_3[0].carbohydrates + top_3[1].carbohydrates + top_3[2].carbohydrates}")
         menu_list.append(top_3[0])
         menu_list.append(top_3[1])
         menu_list.append(top_3[2])
         return menu_list
 
     elif len(top_4) > 0:
-        print("Топ 4!")
-        print(f"{top_4[0].calories + top_4[1].calories + top_4[2].calories}, {top_4[0].proteins + top_4[1].proteins + top_4[2].proteins}, {top_4[0].fats + top_4[1].fats + top_4[2].fats}, {top_4[0].carbohydrates + top_4[1].carbohydrates + top_4[2].carbohydrates}")
         menu_list.append(top_4[0])
         menu_list.append(top_4[1])
         menu_list.append(top_4[2])
         return menu_list
 
     elif len(top_5) > 0:
-        print("Топ 5!")
-        print(f"{top_5[0].calories + top_5[1].calories + top_5[2].calories}, {top_5[0].proteins + top_5[1].proteins + top_5[2].proteins}, {top_5[0].fats + top_5[1].fats + top_5[2].fats}, {top_5[0].carbohydrates + top_5[1].carbohydrates + top_5[2].carbohydrates}")
         menu_list.append(top_5[0])
         menu_list.append(top_5[1])
         menu_list.append(top_5[2])
         return menu_list
 
     elif len(top_6) > 0:
-        print("Топ 6!")
-        print(f"{top_6[0].calories + top_6[1].calories + top_6[2].calories}, {top_6[0].proteins + top_6[1].proteins + top_6[2].proteins}, {top_6[0].fats + top_6[1].fats + top_6[2].fats}, {top_6[0].carbohydrates + top_6[1].carbohydrates + top_6[2].carbohydrates}")
         menu_list.append(top_6[0])
         menu_list.append(top_6[1])
         menu_list.append(top_6[2])
         return menu_list
 
     elif len(top_7) > 0:
-        print("Топ 7!")
-        print(f"{top_7[0].calories + top_7[1].calories + top_7[2].calories}, {top_7[0].proteins + top_7[1].proteins + top_7[2].proteins}, {top_7[0].fats + top_7[1].fats + top_7[2].fats}, {top_7[0].carbohydrates + top_7[1].carbohydrates + top_7[2].carbohydrates}")
         menu_list.append(top_7[0])
         menu_list.append(top_7[1])
         menu_list.append(top_7[2])
@@ -284,10 +280,20 @@ class AlgorithmView(APIView):
             cookware = request.data.getlist("cookware")
 
             # сначала высчитываем норму кбжу юзера
+            coef = 1
             user = request.user
+            if user.physical_activity == "minimum":
+                coef = 1.2
+            elif user.physical_activity == "training3":
+                coef = 1.375
+            elif user.physical_activity == "training5":
+                coef = 1.55
+            elif user.physical_activity == "intensetraining5":
+                coef = 1.7
+            elif user.physical_activity == "maximum":
+                coef = 1.9
             today = date.today()
             age = int(today.year - user.date_of_birth.year - ((today.month, today.day) < (user.date_of_birth.month, user.date_of_birth.day)))
-            coef = 1.375 # Коэфициент физической активности
             calories = 0
             proteins = 0
             fats = 0
@@ -327,7 +333,6 @@ class AlgorithmView(APIView):
 
             # сам алгоритм
             if calories > 0 and proteins > 0 and fats > 0 and carbohydrates > 0:
-                print(f'Вам нужно {calories} калорий, {proteins}г белков, {fats}г жиров, {carbohydrates}г углеводов в день')
                 if(diet=="usual"):
                     criterion_diet = Q(usualdiet=True)
                 elif(diet=="weightloss"):
@@ -337,15 +342,15 @@ class AlgorithmView(APIView):
 
                 try:
                     # получаю все завтраки, обеды и ужины, которые удовлетворяют нашим условиям (подходит для завтрака, диета, не в дизлайках)
-                    breakfasts_all = Dish.objects.filter(Q(breakfast=True) & criterion_diet & ~Q(id__in=user.dish_dislikes.all()))
+                    breakfasts_all = Dish.objects.filter(Q(breakfast=True) & criterion_diet & ~Q(id__in=user.dish_dislikes.all()) & Q(in_algorithm=True))
                     # сортирую по посуде и ингредиентам
                     breakfasts = CookwareIngredientSort(breakfasts_all, cookware_list, user)
 
                     # дальше аналогично
-                    lunchs_all = Dish.objects.filter(Q(lunch=True) & criterion_diet & ~Q(id__in=user.dish_dislikes.all()))
+                    lunchs_all = Dish.objects.filter(Q(lunch=True) & criterion_diet & ~Q(id__in=user.dish_dislikes.all()) & Q(in_algorithm=True))
                     lunchs = CookwareIngredientSort(lunchs_all, cookware_list, user)
 
-                    dinners_all = Dish.objects.filter(Q(dinner=True) & criterion_diet & ~Q(id__in=user.dish_dislikes.all()))
+                    dinners_all = Dish.objects.filter(Q(dinner=True) & criterion_diet & ~Q(id__in=user.dish_dislikes.all()) & Q(in_algorithm=True))
                     dinners = CookwareIngredientSort(dinners_all, cookware_list, user)
 
                     # дальше надо проверить, что у нас минимум по 7 завтраков, обедов и ужинов (иначе рацион на неделю не составить)
@@ -501,6 +506,7 @@ class AlgorithmView(APIView):
 
                         menu = Menu.objects.create(
                             owner = request.user,
+                            info = f'Вам нужно {round(calories, 2)} калорий, {round(proteins, 2)}г белков, {round(fats, 2)}г жиров, {round(carbohydrates, 2)}г углеводов в день',
                             br_mon = monday[0],
                             lu_mon = monday[1],
                             dn_mon = monday[2],
@@ -554,7 +560,6 @@ class GetMenuView(generics.ListAPIView):
     serializer_class = MenuDetailSerializer
 
     def get_queryset(self):
-        print(date.today().weekday())
         return Menu.objects.filter(datestart=get_monday(), owner=self.request.user)
 
 

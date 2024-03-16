@@ -43,6 +43,15 @@ class User(AbstractUser):
         ('F', "Женский"),
     ]
 
+    # Нормально описать и название дать
+    PHYSICAL_ACTIVITY_CHOISE=[
+        ("minimum", "Минимальные нагрузки (сидячая работа)"),
+        ("training3", "Легкие тренировки или пешие прогулки 1-3 раза в неделю"),
+        ("training5", "Тренировки или работа средней тяжести 3-5 раз в неделю"),
+        ("intensetraining5", "Тренировки или тяжелая работа 5-7 раз в неделю"),
+        ("maximum", "Тренировки или тяжелая работа каждый день")
+    ]
+
     username = None
     email = models.EmailField(unique=True, null=False)
     USERNAME_FIELD = 'email'
@@ -52,10 +61,11 @@ class User(AbstractUser):
     weight = models.FloatField(null=False, blank=False, verbose_name="Вес (кг)", help_text="Введите ваш вес в килограммах")
     date_of_birth = models.DateField(null=False, blank=False, verbose_name="Дата рождения", help_text="Введите вашу дату рождения")
     sex = models.CharField(null=False, blank=False, choices=SEX_CHOISE, max_length=1, verbose_name="Пол", help_text="Выберите пол")
+    physical_activity = models.CharField(max_length=400, null=False, blank=False, choices=PHYSICAL_ACTIVITY_CHOISE, verbose_name="Физическая активность", help_text="Выберите свою физическую активность", default="training3")
     image = models.ImageField(upload_to='user/', blank=True, null=True, verbose_name="Фото", help_text="Выберите фото профиля")
 
     # поля, с которыми мы в будущем хотим работать (кроме пароля и юзернейма)
-    REQUIRED_FIELDS = ['first_name', 'last_name', 'height', 'weight', 'date_of_birth', 'sex', 'image']
+    REQUIRED_FIELDS = ['first_name', 'last_name', 'height', 'weight', 'date_of_birth', 'sex', 'image', 'physical_activity']
 
     objects = CustomUserManager()
 
