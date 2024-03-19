@@ -751,6 +751,7 @@ export default{
         border-radius: 5px;
         width: 300px;
         border: 2px solid rgb(0, 0, 0);
+        box-shadow: 3px 3px 3px rgb(0, 0, 0, 0.4);
     }
 
     .textarea__input{
@@ -761,6 +762,7 @@ export default{
         font-size: 20px;
         border-radius: 5px;
         border: 2px solid rgb(0, 0, 0);
+        box-shadow: 3px 3px 3px rgb(0, 0, 0, 0.4);
     }
 
     .row{
@@ -830,6 +832,7 @@ export default{
         font-size: 20px;
         border-radius: 5px;
         width: 280px;
+        box-shadow: 3px 3px 3px rgb(0, 0, 0, 0.4);
     }
 
     .ingredient__count{
@@ -839,6 +842,7 @@ export default{
         font-size: 20px;
         border-radius: 5px;
         width: 60px;
+        box-shadow: 3px 3px 3px rgb(0, 0, 0, 0.4);
     }
 
     .ingredient__unit{
@@ -849,6 +853,7 @@ export default{
         margin-top: 35.5px;
         margin-right: 10px;
         margin-left: 10px;
+        box-shadow: 3px 3px 3px rgb(0, 0, 0, 0.4);
     }
 
     .ingredients__column{
@@ -889,6 +894,7 @@ export default{
         background-color: rgb(200, 0, 255);
         color: white;
         border-radius: 5px;
+        box-shadow: 3px 3px 3px rgb(0, 0, 0, 0.4);
     }
 
     #add__ing__btn__dis
@@ -938,6 +944,7 @@ export default{
         font-size: 20px;
         border-radius: 5px;
         width: 120px;
+        box-shadow: 3px 3px 3px rgb(0, 0, 0, 0.4);
     }
 
     .div__calories{
@@ -1077,6 +1084,7 @@ export default{
         border-radius: 5px;
         text-align: center;
         border: 2px solid rgb(0, 0, 0);
+        box-shadow: 3px 3px 3px rgb(0, 0, 0, 0.4);
     }
 
     .photo__input:hover{
@@ -1123,6 +1131,7 @@ export default{
         border-radius: 5px;
         border: 2px solid rgb(0, 0, 0);
         resize: vertical;
+        box-shadow: 3px 3px 3px rgb(0, 0, 0, 0.4);
     }
 
     .create__dish{
