@@ -1,8 +1,8 @@
 Дипломный проект "веб-приложение интерактивной кулинарной книги с персонализированным планировщиком меню"
 
-Backend: python 3.12, Django Rest Framework
+Backend: python 3.12, Django 5.0, Django Rest Framework
 
-Frontend: Vue3 CLI (Node.js)
+Frontend: Vue3 CLI (5.0.8) (Node.js 19.4.0)
 
 mainapp:
 Здесь логика планировщика меню (главная страница, создание меню)

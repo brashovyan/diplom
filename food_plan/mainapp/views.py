@@ -10,6 +10,7 @@ from rest_framework import status
 from .serializers import *
 from .models import *
 from rest_framework import generics, viewsets
+from django.shortcuts import render, get_object_or_404
 
 
 # сортировка по посуде и ингредиентам
@@ -277,7 +278,10 @@ class AlgorithmView(APIView):
         try:
             # получаю данные с фронта
             diet = request.data["diet"]
-            cookware = request.data.getlist("cookware")
+            try:
+                cookware = request.data.getlist("cookware")
+            except:
+                cookware = request.data["cookware"]
 
             # сначала высчитываем норму кбжу юзера
             coef = 1
@@ -303,7 +307,7 @@ class AlgorithmView(APIView):
             else:
                 calories = (10 * user.weight + 6.25 * user.height - 5 * age - 161) * coef
 
-            if(diet == "usual"):
+            if(diet == "usualdiet"):
                 proteins = (0.15 * calories) / 4
                 fats = (0.3 * calories) / 9
                 carbohydrates = (0.55 * calories) / 4
@@ -333,7 +337,7 @@ class AlgorithmView(APIView):
 
             # сам алгоритм
             if calories > 0 and proteins > 0 and fats > 0 and carbohydrates > 0:
-                if(diet=="usual"):
+                if(diet=="usualdiet"):
                     criterion_diet = Q(usualdiet=True)
                 elif(diet=="weightloss"):
                     criterion_diet = Q(weightloss=True)
@@ -506,7 +510,8 @@ class AlgorithmView(APIView):
 
                         menu = Menu.objects.create(
                             owner = request.user,
-                            info = f'Вам нужно {round(calories, 2)} калорий, {round(proteins, 2)}г белков, {round(fats, 2)}г жиров, {round(carbohydrates, 2)}г углеводов в день',
+                            info = f'Тебе нужно {round(calories, 2)} калорий, {round(proteins, 2)}г белков, {round(fats, 2)}г жиров, {round(carbohydrates, 2)}г углеводов в день',
+                            diet = diet,
                             br_mon = monday[0],
                             lu_mon = monday[1],
                             dn_mon = monday[2],
@@ -535,11 +540,14 @@ class AlgorithmView(APIView):
                             lu_sun = sunday[1],
                             dn_sun = sunday[2],
                         )
-                        return Response(MenuDetailSerializer(menu, many=False, context={"request": request}).data)
+                        for cookware_id in cookware_list:
+                            cookware = get_object_or_404(Cookware, pk=cookware_id)
+                            menu.cookware.add(cookware)
+                        return Response([MenuDetailSerializer(menu, many=False, context={"request": request}).data])
 
                     else:
                         # недостаточно блюд для меню
-                        return Response({"error": "Недостаточно блюд для меню"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                        return Response({"error": "Недостаточно блюд для меню! Скорее всего это из-за фильтров. Попробуйте другие."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
                 except Exception as error:
                     # Если алгоритм не сработал
@@ -563,3 +571,22 @@ class GetMenuView(generics.ListAPIView):
         return Menu.objects.filter(datestart=get_monday(), owner=self.request.user)
 
 
+# Заменить блюдо в меню
+class ReplaceView(generics.ListAPIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        menu = get_object_or_404(Menu, datestart=get_monday(), owner=self.request.user)
+        dish_id = request.data["dish_id"]
+        dish = get_object_or_404(Dish, pk=dish_id)
+        # убеждаемся, что это блюдо есть в меню
+        dishes_list = [menu.br_mon, menu.lu_mon, menu.dn_mon, menu.br_tue, menu.lu_tue, menu.dn_tue, menu.br_wed,
+                       menu.lu_wed, menu.dn_wed, menu.br_thu, menu.lu_thu, menu.dn_thu, menu.br_fri, menu.lu_fri,
+                       menu.dn_fri, menu.br_sat, menu.lu_sat, menu.dn_sat, menu.br_sun, menu.lu_sun, menu.dn_sun]
+        if dish in dishes_list:
+            # И просто пытаюсь найти такое же, но другое)
+            print("Блюдо в меню")
+        else:
+            print("Блюда нет в меню")
+
+        return Response({"123": "123"})
