@@ -33,16 +33,21 @@
             <template v-if="$store.state.isAuthenticated">
                 <template v-if="$store.state.userphoto && $store.state.userphoto != 'null'">
                     <!-- Фотка есть -->
-                    <router-link to="/myprofile">
-                        <img v-bind:src="$store.state.userphoto" class="img">
+                    <router-link :to="{name: 'myprofile', params: {id: $store.state.userid}}">
+                        <p data-tooltip="Профиль">
+                            <img v-bind:src="$store.state.userphoto" class="img">
+                        </p>
                     </router-link>
                 </template>
                 <template v-else>
                     <!-- Фотки нет -->
-                    <router-link to="/myprofile">
-                        <img src="@/assets/default_user_img.jpg" class="img"/>
+                    <router-link :to="{name: 'myprofile', params: {id: $store.state.userid}}">
+                        <p data-tooltip="Профиль">
+                            <img src="@/assets/default_user_img.jpg" class="img"/>
+                        </p>
                     </router-link>
                 </template>
+             
                 <p @click="logout()" class="logout">Выйти</p>
             </template>
 
@@ -212,6 +217,27 @@ export default {
 
     .login:hover, .register:hover{
         color: rgb(255, 219, 219);
+    }
+
+    [data-tooltip] {
+        position: relative; /* Относительное позиционирование */ 
+    }
+    [data-tooltip]::after {
+        content: attr(data-tooltip); /* Выводим текст */
+        position: absolute; /* Абсолютное позиционирование */
+        width: 70px; /* Ширина подсказки */
+        left: 0; top: 0; /* Положение подсказки */
+        background: #3989c9; /* Синий цвет фона */
+        color: #fff; /* Цвет текста */
+        padding: 0.5em; /* Поля вокруг текста */
+        box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3); /* Параметры тени */
+        pointer-events: none; /* Подсказка */
+        opacity: 0; /* Подсказка невидима */
+        transition: 0.5s; /* Время появления подсказки */
+    } 
+    [data-tooltip]:hover::after {
+        opacity: 1; /* Показываем подсказку */
+        top: 2em; /* Положение подсказки */
     }
 
     /* Мобильная верстка */

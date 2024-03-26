@@ -7,7 +7,7 @@
                     <p class="diet__p">Диета:</p>
 
                     <div class="form_radio_btn">
-                        <input id="radio-1" type="radio" name="diet" value="usual" v-model="diet" checked>
+                        <input id="radio-1" type="radio" name="diet" value="usualdiet" v-model="diet" checked>
                         <label for="radio-1">Обычная</label>
                     </div>
 
@@ -55,7 +55,78 @@
             </div>
         </template>
         <template v-else>
-            {{ menu }}
+            <div class="main__with__menu">
+                <template v-for="(m, k) in menu" :key="k">
+                    <p class="main__p">Твоё меню с {{ m.datestart }} по {{ m.dateend }}</p>
+                    <p class="calories__info">{{ m.info }}</p>
+
+                    <div class="day__main">
+                        <div class="day">
+                            <p class="day__week">Понедельник</p>
+                            <div class="dish__day__main">
+                                <div class="dish__label__main">
+                                    <div class="dish__day">
+                                        <div class="dish__day__inside">
+                                            <router-link :to="{name: 'dish', params: {id: m.br_mon.id}}" class="link">
+                                                <div class="photo__info">
+                                                    <template v-if="m.br_mon.mainphoto == null || m.br_mon.mainphoto == ''">
+                                                    <img src="@/assets/default_dish.png" class="img"/>
+                                                    </template>
+                                                    <template v-else>
+                                                        <img v-bind:src=m.br_mon.mainphoto class="img">
+                                                    </template>
+                                                    <div class="photo__info__table">
+                                                        <p class="dish__info">⚡: {{ m.br_mon.calories }} ккал</p>
+                                                        <p class="dish__info">🕓: {{ m.br_mon.time }}</p>
+                                                        <template v-if="m.br_mon.creator.first_name != '' && m.br_mon.creator.last_name != ''">
+                                                            <p class="dish__info">👨‍🍳: {{  m.br_mon.creator.last_name }} {{ m.br_mon.creator.first_name }}</p>
+                                                        </template>
+                                                        <template v-else>
+                                                            <p class="dish__info">👨‍🍳: {{ m.br_mon.creator.email }}</p>
+                                                        </template>
+                                                    </div>
+                                                </div>
+                                                <p class="dish__title">{{ m.br_mon.title }}</p>
+                                                <p class="dish__description">{{ m.br_mon.description }}</p>
+                                            </router-link>                                                
+                                            <div class="dish__buttons__main">
+                                                <button class="replace">Заменить</button>
+                                                <div class="dish__buttons">
+                                                    <template v-if="m.br_mon.like == true">
+                                                        <img src="@/assets/like.png" class="like" @click="dishLike('br_mon', m.br_mon.id)"/>
+                                                    </template>
+                                                    <template v-else>
+                                                        <img src="@/assets/not_like.png" class="like" @click="dishLike('br_mon', m.br_mon.id)"/>
+                                                    </template>
+                                                    <p>Дизлайк</p>
+                                                </div>
+                                            </div>
+                                            
+                                        </div>
+                                    </div>
+                                    <p class="dish__label">Завтрак</p>
+                                </div>
+
+                                <div class="dish__label__main">
+                                    <div class="dish__day">
+
+                                    </div>
+                                    <p class="dish__label">Обед</p>
+                                </div>
+
+                                <div class="dish__label__main">
+                                    <div class="dish__day">
+                                        
+                                    </div>
+                                    <p class="dish__label">Ужин</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                </template>
+            </div>
+
 
             <!-- Ошибки, если не удалось получить меню -->
             <div class="errors__menu">
@@ -78,13 +149,14 @@ import axios from 'axios'
 export default{
   data() {
       return {
-          diet: "usual", // выбранная диета
+          diet: "usualdiet", // выбранная диета
           menu: "", // сеню на эту неделю
           cookware_response: [], // список посуды с сервака
           errors_cookware: [], // ошибки с получением посуды
           menu_cookware: [], // посуда для меню
           errors_menu_create: [], // ошибки при создании меню
           errors_menu: [], // ошибки при получении меню
+          errors_like: [],
       }
   },
 
@@ -113,29 +185,63 @@ export default{
             }
         })
 
-    // включаю анимацию загрузки
-    load = document.querySelector('.loading'); 
-    load.style.display = 'block';
-    
     // Получаю меню на эту неделю
-    await axios.get('get_menu/').then(response => {
-            let load = document.querySelector('.loading'); load.style.display = 'none';
-            this.menu = response.data;
-        })
-        .catch(error => {
-            this.errors_menu = [];
-            let load = document.querySelector('.loading'); load.style.display = 'none';
-            if (error.response) {
-                for (const property in error.response.data) {
-                    this.errors_menu.push(`${error.response.data[property]}`)
-                }
-            } else {
-                this.errors_menu.push('Что-то пошло не так! Повторите попытку позже)')
-            }
-        })
+    this.getMenu();
   },
 
   methods: {
+        async getMenu(){
+            // включаю анимацию загрузки
+            let load = document.querySelector('.loading'); 
+            load.style.display = 'block';
+
+            await axios.get('get_menu/').then(response => {
+            let load = document.querySelector('.loading'); load.style.display = 'none';
+            this.menu = response.data;
+            this.checkMenu();
+            })
+            .catch(error => {
+                this.errors_menu = [];
+                let load = document.querySelector('.loading'); load.style.display = 'none';
+                if (error.response) {
+                    for (const property in error.response.data) {
+                        this.errors_menu.push(`${error.response.data[property]}`)
+                    }
+                } else {
+                    this.errors_menu.push('Что-то пошло не так! Повторите попытку позже)')
+                }
+            })
+        },
+
+        async checkMenu(){
+            // проверяю лайки/дизлайки
+            if(this.menu.length > 0){
+                var days = ['br_mon', 'lu_mon', 'dn_mon', 'br_tue', 'lu_tue', 'dn_tue', 'br_wed', 'lu_wed', 'dn_wed', 'br_thu', 'lu_thu', 'dn_thu', 'br_fri', 'lu_fri', 'dn_fri', 'br_sat', 'lu_sat', 'dn_sat', 'br_sun', 'lu_sun', 'dn_sun']
+                for(let day of days){
+                    if(this.menu[0][day]['likes'].indexOf(Number(this.$store.state.userid)) > -1){
+                        this.menu[0][day]['like'] = true;
+                    }
+                    else{
+                        this.menu[0][day]['like'] = false;
+                    }
+
+                    if(this.menu[0][day]['dislikes'].indexOf(Number(this.$store.state.userid)) > -1){
+                    this.menu[0][day]['dislike'] = true;
+                    }
+                    else{
+                        this.menu[0][day]['dislike'] = false;
+                    }
+                }
+
+                // костыльно меняю формат даты
+                let datestart_str = this.menu[0]['datestart'].split('-')
+                this.menu[0]['datestart'] = `${datestart_str[2]}.${datestart_str[1]}`;
+
+                let dateend_str = this.menu[0]['dateend'].split('-')
+                this.menu[0]['dateend'] = `${dateend_str[2]}.${dateend_str[1]}`;
+            }
+        },
+
         // добавление посуды
         async chooseCookware(id, input_id){
             var input = document.querySelector(input_id);
@@ -164,6 +270,7 @@ export default{
             await axios.post('create_menu/', formData).then(response => {
                         let load = document.querySelector('.loading'); load.style.display = 'none';
                         this.menu = response.data;
+                        this.checkMenu();
                     })
                     .catch(error => {
                         this.errors_menu_create = [];
@@ -176,6 +283,59 @@ export default{
                             this.errors_menu_create.push('Что-то пошло не так! Повторите попытку позже)')
                         }
                     })
+        },
+
+        // поставить (убрать) лайк
+        async dishLike(day, id){
+            // если ставим лайк
+            if(this.menu[0][day]['like'] == false){
+                // включаю анимацию загрузки
+                let load = document.querySelector('.loading'); 
+                load.style.display = 'block';
+
+                await axios.post(`dish/like/${id}/`).then(response => {
+                    let load = document.querySelector('.loading'); load.style.display = 'none';
+                    console.log(response.data);
+                    this.getMenu();
+                    this.checkMenu();
+                    })
+                    .catch(error => {
+                        this.errors_like = [];
+                        let load = document.querySelector('.loading'); load.style.display = 'none';
+                        if (error.response) {
+                            for (const property in error.response.data) {
+                                this.errors_like.push(`${error.response.data[property]}`)
+                            }
+                        } else {
+                            this.errors_like.push('Что-то пошло не так! Повторите попытку позже)')
+                        }
+                    })
+               
+            }
+            // убираем лайк
+            else{
+                // включаю анимацию загрузки
+                let load = document.querySelector('.loading'); 
+                load.style.display = 'block';
+
+                await axios.delete(`dish/clear_like/${id}/`).then(response => {
+                    let load = document.querySelector('.loading'); load.style.display = 'none';
+                    console.log(response.data);
+                    this.getMenu();
+                    this.checkMenu();
+                    })
+                    .catch(error => {
+                        this.errors_like = [];
+                        let load = document.querySelector('.loading'); load.style.display = 'none';
+                        if (error.response) {
+                            for (const property in error.response.data) {
+                                this.errors_like.push(`${error.response.data[property]}`)
+                            }
+                        } else {
+                            this.errors_like.push('Что-то пошло не так! Повторите попытку позже)')
+                        }
+                    })
+            }
         },
     },
 }
@@ -366,6 +526,166 @@ export default{
     .empty{
         margin-top: 21%;
     }
-    
 
+    .calories__info{
+        font-size: 18px;
+        font-weight: 500;
+        margin-left: 30px;
+        margin-top: 20px;
+    }
+
+    .day__main{
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-top: 20px;
+        margin-bottom: 20px;
+    }
+
+    .day{
+        width: 90%;
+        height: 100%;
+        background-color: #F9E8FF;
+        border-radius: 20px;
+    }
+
+    .day__week{
+        margin-top: 20px;
+        margin-left: 30px;
+        font-size: 28px;
+        font-weight: 600;
+    }
+
+    .dish__day__main{
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+    }
+
+    .dish__day{
+        margin-top: 10px;
+        margin-left: 20px;
+        width: 400px;
+        height: 460px;
+        background-color: #CED6FF;
+        border-radius: 20px;
+        margin-right: 20px;
+    }
+
+    .dish__label__main{
+        display: flex;
+        align-items: center;
+        flex-direction: column;
+        justify-content: space-between;
+        flex-wrap: wrap;
+    }
+
+    .dish__label{
+        margin-top: 10px;
+        margin-bottom: 10px;
+        font-size: 22px;
+        font-weight: 500;
+    }
+
+    .img{
+        width: 175px;
+        height: 150px;
+        object-fit: cover;
+        border-radius: 10px;
+    }
+
+    .dish__day__inside{
+        margin: 10px;
+    }
+
+    .photo__info{
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        flex-direction: row;
+    }
+
+    .photo__info__table{
+        display: flex;
+        flex-direction: column;
+    }
+
+    .dish__info{
+        margin-bottom: 10px;
+        font-size: 17px;
+        margin-left: 10px;
+        margin-top: 10px;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        overflow: hidden;
+        width: 195px;
+    }
+
+    .dish__title{
+        text-align: center;
+        margin-top: 10px;
+        width: 100%;
+        font-size: 18px;
+        font-weight: 550;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        overflow: hidden;
+    }
+
+    .dish__description{
+        overflow: hidden;
+        margin-top: 5px;
+        height: 200px;
+        white-space: pre-wrap;
+    }
+
+    .dish__buttons__main{
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-top: 20px;
+    }
+
+    .dish__buttons{
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-direction: row;
+        width: 100px;
+    }
+
+    .replace{
+        color: black;
+        background-color: white;
+        border-radius: 10px;
+        width: 100px;
+        height: 25px;
+        font-size: 16px;
+        border: 0px solid rgb(0, 0, 0);
+        box-shadow: 3px 3px 3px rgb(0, 0, 0, 0.4);
+    }
+
+    .replace:hover{
+        cursor: pointer;
+        background-color: rgb(200, 200, 200);
+    }
+
+    .link{
+        color: black;
+        text-decoration: none;
+    }
+
+    .link:hover{
+        color: rgb(127, 127, 127);
+    }
+
+    .like{
+        width: 25px;
+        height: 25px;
+    }
+
+    .like:hover{
+        cursor: pointer;
+    }
 </style>

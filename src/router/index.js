@@ -22,7 +22,7 @@ const routes = [
     component: () => import('../views/RegisterView.vue')
   },
   {
-    path: '/myprofile',
+    path: '/myprofile/:id',
     name: 'myprofile',
     component: () => import('../views/MyProfileView.vue')
   },
@@ -40,6 +40,11 @@ const routes = [
     path: '/add_dish',
     name: 'add_dish',
     component: () => import('../views/AddDishView.vue')
+  },
+  {
+    path: '/dish/:id',
+    name: 'dish',
+    component: () => import('../views/DishDetailView.vue')
   },
 ]
 

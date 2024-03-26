@@ -583,6 +583,7 @@ export default{
             var formData = new FormData();
             formData.append("title", this.dish_title);
             formData.append("description", this.dish_description);
+            this.warning = false;
             
             // если белки/жиры и т.д. не указаны, то я их не добавляю (по дефолту на бэке 0)
             if(this.proteins == ""){
