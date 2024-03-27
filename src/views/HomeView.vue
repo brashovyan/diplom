@@ -31,6 +31,10 @@
                         </template>
                     </div>
                 </div>
+                <p class="warning__info">Так же мы учтем блюда, которым вы поставили дизлайк, и блюда, в которых содержатся ингредиенты, 
+                    добавленные вами в личный черный список. Они не встретятся в вашем меню. 
+                    Ещё у вас будет возможность заменить непонравившееся блюдо, но оно может снова встретиться в будущих меню. Если вы поставите 
+                дизлайк, то блюдо автоматически заменится и впредь больше не будет появлятся. Увидеть список блюд в дизлайках и черный список ингредиентов вы можете в личном кабинете.</p>
                 <div class="div__btn">
                     <button @click="createMenu()" class="create__btn">Создать меню</button>
                 </div>
@@ -90,7 +94,7 @@
                                                 <p class="dish__description">{{ m.br_mon.description }}</p>
                                             </router-link>                                                
                                             <div class="dish__buttons__main">
-                                                <button class="replace">Заменить</button>
+                                                <button class="replace" @click="replace(m.br_mon.id)">Заменить</button>
                                                 <div class="dish__buttons">
                                                     <template v-if="m.br_mon.like == true">
                                                         <img src="@/assets/like.png" class="like" @click="dishLike('br_mon', m.br_mon.id)"/>
@@ -98,18 +102,67 @@
                                                     <template v-else>
                                                         <img src="@/assets/not_like.png" class="like" @click="dishLike('br_mon', m.br_mon.id)"/>
                                                     </template>
-                                                    <p>Дизлайк</p>
+                                                    
+                                                    <template v-if="m.br_mon.dislike == true">
+                                                        <img src="@/assets/dislike.png" class="dislike" @click="dishDislike('br_mon', m.br_mon.id)"/>
+                                                    </template>
+                                                    <template v-else>
+                                                        <img src="@/assets/not_dislike.png" class="dislike" @click="dishDislike('br_mon', m.br_mon.id)"/>
+                                                    </template>
                                                 </div>
                                             </div>
                                             
                                         </div>
+                                        
                                     </div>
                                     <p class="dish__label">Завтрак</p>
                                 </div>
 
                                 <div class="dish__label__main">
                                     <div class="dish__day">
-
+                                        <!-- <div class="dish__day__inside">
+                                            <router-link :to="{name: 'dish', params: {id: m.br_mon.id}}" class="link">
+                                                <div class="photo__info">
+                                                    <template v-if="m.br_mon.mainphoto == null || m.br_mon.mainphoto == ''">
+                                                    <img src="@/assets/default_dish.png" class="img"/>
+                                                    </template>
+                                                    <template v-else>
+                                                        <img v-bind:src=m.br_mon.mainphoto class="img">
+                                                    </template>
+                                                    <div class="photo__info__table">
+                                                        <p class="dish__info">⚡: {{ m.br_mon.calories }} ккал</p>
+                                                        <p class="dish__info">🕓: {{ m.br_mon.time }}</p>
+                                                        <template v-if="m.br_mon.creator.first_name != '' && m.br_mon.creator.last_name != ''">
+                                                            <p class="dish__info">👨‍🍳: {{  m.br_mon.creator.last_name }} {{ m.br_mon.creator.first_name }}</p>
+                                                        </template>
+                                                        <template v-else>
+                                                            <p class="dish__info">👨‍🍳: {{ m.br_mon.creator.email }}</p>
+                                                        </template>
+                                                    </div>
+                                                </div>
+                                                <p class="dish__title">{{ m.br_mon.title }}</p>
+                                                <p class="dish__description">{{ m.br_mon.description }}</p>
+                                            </router-link>                                                
+                                            <div class="dish__buttons__main">
+                                                <button class="replace" @click="replace(m.br_mon.id)">Заменить</button>
+                                                <div class="dish__buttons">
+                                                    <template v-if="m.br_mon.like == true">
+                                                        <img src="@/assets/like.png" class="like" @click="dishLike('br_mon', m.br_mon.id)"/>
+                                                    </template>
+                                                    <template v-else>
+                                                        <img src="@/assets/not_like.png" class="like" @click="dishLike('br_mon', m.br_mon.id)"/>
+                                                    </template>
+                                                    
+                                                    <template v-if="m.br_mon.dislike == true">
+                                                        <img src="@/assets/dislike.png" class="dislike" @click="dishDislike('br_mon', m.br_mon.id)"/>
+                                                    </template>
+                                                    <template v-else>
+                                                        <img src="@/assets/not_dislike.png" class="dislike" @click="dishDislike('br_mon', m.br_mon.id)"/>
+                                                    </template>
+                                                </div>
+                                            </div>
+                                            
+                                        </div> -->
                                     </div>
                                     <p class="dish__label">Обед</p>
                                 </div>
@@ -127,10 +180,26 @@
                 </template>
             </div>
 
+            <button @click="deleteMenu()">Удалить меню</button>
+
 
             <!-- Ошибки, если не удалось получить меню -->
             <div class="errors__menu">
                 <template v-for="(error, key) in errors_menu" :key="key">
+                    <p>{{ error }}</p>
+                </template>
+            </div>
+
+            <!-- Ошибки, если не удалось заменить блюдо -->
+            <div class="errors__menu">
+                <template v-for="(error, key) in errors_replace" :key="key">
+                    <p>{{ error }}</p>
+                </template>
+            </div>
+
+            <!-- Ошибки, если не удалось поставить лайк-->
+            <div class="errors__menu">
+                <template v-for="(error, key) in errors_like" :key="key">
                     <p>{{ error }}</p>
                 </template>
             </div>
@@ -157,6 +226,9 @@ export default{
           errors_menu_create: [], // ошибки при создании меню
           errors_menu: [], // ошибки при получении меню
           errors_like: [],
+          errors_dislike: [],
+          errors_replace: [],
+          errors_delete: [],
       }
   },
 
@@ -337,6 +409,114 @@ export default{
                     })
             }
         },
+
+        // поставить дизлайк
+        async dishDislike(day, id){
+            // если ставим дизлайк
+            if(this.menu[0][day]['dislike'] == false){
+                // включаю анимацию загрузки
+                let load = document.querySelector('.loading'); 
+                load.style.display = 'block';
+
+                await axios.post(`dish/dislike/${id}/`).then(response => {
+                    let load = document.querySelector('.loading'); load.style.display = 'none';
+                    console.log(response.data);
+                    this.replace(id);
+                    })
+                    .catch(error => {
+                        this.errors_dislike = [];
+                        let load = document.querySelector('.loading'); load.style.display = 'none';
+                        if (error.response) {
+                            for (const property in error.response.data) {
+                                this.errors_dislike.push(`${error.response.data[property]}`)
+                            }
+                        } else {
+                            this.errors_dislike.push('Что-то пошло не так! Повторите попытку позже)')
+                        }
+                    })
+               
+            }
+            // если дизлайк каким то боком стоит
+            else{
+                // включаю анимацию загрузки
+                let load = document.querySelector('.loading'); 
+                load.style.display = 'block';
+
+                await axios.delete(`dish/clear_like/${id}/`).then(response => {
+                    let load = document.querySelector('.loading'); load.style.display = 'none';
+                    console.log(response.data);
+                    this.getMenu();
+                    this.checkMenu();
+                    })
+                    .catch(error => {
+                        this.errors_dislike = [];
+                        let load = document.querySelector('.loading'); load.style.display = 'none';
+                        if (error.response) {
+                            for (const property in error.response.data) {
+                                this.errors_dislike.push(`${error.response.data[property]}`)
+                            }
+                        } else {
+                            this.errors_dislike.push('Что-то пошло не так! Повторите попытку позже)')
+                        }
+                    })
+            }
+        },
+
+        // заменить блюдо
+        async replace(dish_id){
+            var formData = new FormData();
+            formData.append("dish_id", dish_id);
+
+            // включаю анимацию загрузки
+            let load = document.querySelector('.loading'); 
+            load.style.display = 'block';
+
+            await axios.post(`replace/`, formData).then(response => {
+                    let load = document.querySelector('.loading'); load.style.display = 'none';
+                    this.menu = response.data;
+                    this.checkMenu();
+
+                    })
+                    .catch(error => {
+                        this.errors_replace = [];
+                        let load = document.querySelector('.loading'); load.style.display = 'none';
+                        if (error.response) {
+                            for (const property in error.response.data) {
+                                this.errors_replace.push(`${error.response.data[property]}`)
+                            }
+                            this.getMenu();
+                        } else {
+                            this.errors_replace.push('Что-то пошло не так! Повторите попытку позже)');
+                            this.getMenu();
+                        }
+                    })
+        },
+
+        // Удалить меню
+        async deleteMenu(){
+            // включаю анимацию загрузки
+            let load = document.querySelector('.loading'); 
+            load.style.display = 'block';
+
+            await axios.delete(`delete_menu/`).then(response => {
+                    let load = document.querySelector('.loading'); load.style.display = 'none';
+                    console.log(response.data);
+                    // обновляю страницу
+                    this.$router.go(0);
+
+                    })
+                    .catch(error => {
+                        this.errors_delete = [];
+                        let load = document.querySelector('.loading'); load.style.display = 'none';
+                        if (error.response) {
+                            for (const property in error.response.data) {
+                                this.errors_delete.push(`${error.response.data[property]}`)
+                            }
+                        } else {
+                            this.errors_delete.push('Что-то пошло не так! Повторите попытку позже)')
+                        }
+                    })
+        }
     },
 }
 </script>
@@ -680,12 +860,20 @@ export default{
         color: rgb(127, 127, 127);
     }
 
-    .like{
+    .like, .dislike{
         width: 25px;
         height: 25px;
     }
 
-    .like:hover{
+    .like:hover, .dislike:hover{
         cursor: pointer;
+    }
+
+    .warning__info{
+        margin-left: 80px;
+        margin-right: 80px;
+        margin-top: 30px;
+        margin-bottom: 30px;
+        text-align: center;
     }
 </style>
