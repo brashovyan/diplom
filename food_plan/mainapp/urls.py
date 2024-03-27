@@ -10,4 +10,5 @@ urlpatterns = [
     path('create_menu/', AlgorithmView.as_view()),
     path('get_menu/', GetMenuView.as_view()),
     path('replace/', ReplaceView.as_view()),
+    path('delete_menu/', DeleteMenuView.as_view()),
 ]

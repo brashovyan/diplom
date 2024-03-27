@@ -39,6 +39,7 @@ class Menu(models.Model):
     info = models.CharField(max_length=1000, null=True, blank=True, verbose_name='Информация', help_text="Дополнительная информация")
     diet = models.CharField(max_length=100, null=False, blank=False, choices=DIET, verbose_name='Диета', help_text="Выберите тип диеты", default="usualdiet")
     cookware = models.ManyToManyField(Cookware, blank=True, verbose_name="Посуда", help_text="Выберите посуду, которая у вас есть в наличии", related_name="menu")
+    blacklist = models.ManyToManyField(Dish, blank=True, verbose_name='Исключенные блюда', help_text='Блюда, которые уже заменяли', related_name='blacklist')
 
     br_mon = models.ForeignKey(Dish, on_delete=models.CASCADE, verbose_name='Блюдо завтрак пн', help_text="Блюдо завтрак пн", null=False, related_name='br_mon')
     lu_mon = models.ForeignKey(Dish, on_delete=models.CASCADE, verbose_name='Блюдо обед пн', help_text="Блюдо обед пн", null=False, related_name='lu_mon')

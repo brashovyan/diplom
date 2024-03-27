@@ -547,7 +547,7 @@ class AlgorithmView(APIView):
 
                     else:
                         # недостаточно блюд для меню
-                        return Response({"error": "Недостаточно блюд для меню! Скорее всего это из-за фильтров. Попробуйте другие."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                        return Response({"error": "Недостаточно блюд для меню! Скорее всего это из-за фильтров или много блюд в дизлайках"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
                 except Exception as error:
                     # Если алгоритм не сработал
@@ -579,14 +579,155 @@ class ReplaceView(generics.ListAPIView):
         menu = get_object_or_404(Menu, datestart=get_monday(), owner=self.request.user)
         dish_id = request.data["dish_id"]
         dish = get_object_or_404(Dish, pk=dish_id)
+
         # убеждаемся, что это блюдо есть в меню
         dishes_list = [menu.br_mon, menu.lu_mon, menu.dn_mon, menu.br_tue, menu.lu_tue, menu.dn_tue, menu.br_wed,
                        menu.lu_wed, menu.dn_wed, menu.br_thu, menu.lu_thu, menu.dn_thu, menu.br_fri, menu.lu_fri,
                        menu.dn_fri, menu.br_sat, menu.lu_sat, menu.dn_sat, menu.br_sun, menu.lu_sun, menu.dn_sun]
-        if dish in dishes_list:
-            # И просто пытаюсь найти такое же, но другое)
-            print("Блюдо в меню")
-        else:
-            print("Блюда нет в меню")
 
-        return Response({"123": "123"})
+        if dish in dishes_list:
+            # диета
+            if (menu.diet == "usualdiet"):
+                criterion_diet = Q(usualdiet=True)
+            elif (menu.diet == "weightloss"):
+                criterion_diet = Q(weightloss=True)
+            elif (menu.diet == "weightgain"):
+                criterion_diet = Q(weightgain=True)
+
+            breakfast = False
+            lunch = False
+            dinner = False
+
+            # дальше топорно проверяю это завтрак, обед или ужин
+            if dish in [menu.br_mon, menu.br_tue, menu.br_wed, menu.br_thu, menu.br_fri, menu.br_sat, menu.br_sun]:
+                breakfast = True
+            elif dish in [menu.lu_mon, menu.lu_tue, menu.lu_wed, menu.lu_thu, menu.lu_fri, menu.lu_sat, menu.lu_sun]:
+                lunch = True
+            elif dish in [menu.dn_mon, menu.dn_tue, menu.dn_wed, menu.dn_thu, menu.dn_fri, menu.dn_sat, menu.dn_sun]:
+                dinner = True
+
+            if (breakfast):
+                criterion_day = Q(breakfast=True)
+            elif (lunch):
+                criterion_day = Q(lunch=True)
+            elif (dinner):
+                criterion_day = Q(dinner=True)
+
+            # получаю получаю все подходящие блюда
+            dishes_all = Dish.objects.filter(criterion_day & criterion_diet & ~Q(id__in=request.user.dish_dislikes.all()) & Q(in_algorithm=True))
+            # сортирую по посуде и ингредиентам
+            cookware_list = []
+            for cookware in menu.cookware.all():
+                cookware_list.append(cookware.id)
+            dishes = []
+            for d in CookwareIngredientSort(dishes_all, cookware_list, request.user):
+                if d not in menu.blacklist.all():
+                    dishes.append(d)
+
+            if len(dishes) > 0:
+                # пытаюсь среди этого списка отыскать плюс минус такое же кбжу
+                random.shuffle(dishes)
+                candidate = ""
+                for dish_candidate in dishes:
+                    if dish_candidate != dish:
+                        # суммарное отклонение от старого блюда должно быть минимальным
+                        error = abs(dish_candidate.calories - dish.calories) + abs(dish_candidate.proteins - dish.proteins) + abs(dish_candidate.fats - dish.fats) + abs(dish_candidate.carbohydrates - dish.carbohydrates)
+                        if candidate == "":
+                            candidate = dish_candidate
+                        error_top = abs(candidate.calories - dish.calories) + abs(candidate.proteins - dish.proteins) + abs(candidate.fats - dish.fats) + abs(candidate.carbohydrates - dish.carbohydrates)
+                        if error < error_top:
+                            candidate = dish_candidate
+
+                # старое блюдо отправляю в блэклист, чтобы оно снова не попалось при замене
+                if candidate != "":
+                    menu.blacklist.add(dish)
+                    print(dish.id, candidate.id)
+
+                    # заменяю блюдо в меню (извините)
+                    if menu.br_mon == dish:
+                        menu.br_mon = candidate
+                        menu.save()
+                    elif menu.lu_mon == dish:
+                        menu.lu_mon = candidate
+                        menu.save()
+                    elif menu.dn_mon == dish:
+                        menu.dn_mon = candidate
+                        menu.save()
+
+                    elif menu.br_tue == dish:
+                        menu.br_tue = candidate
+                        menu.save()
+                    elif menu.lu_tue == dish:
+                        menu.lu_tue = candidate
+                        menu.save()
+                    elif menu.dn_tue == dish:
+                        menu.dn_tue = candidate
+                        menu.save()
+
+                    elif menu.br_wed == dish:
+                        menu.br_wed = candidate
+                        menu.save()
+                    elif menu.lu_wed == dish:
+                        menu.lu_wed = candidate
+                        menu.save()
+                    elif menu.dn_wed == dish:
+                        menu.dn_wed = candidate
+                        menu.save()
+
+                    elif menu.br_thu == dish:
+                        menu.br_thu = candidate
+                        menu.save()
+                    elif menu.lu_thu == dish:
+                        menu.lu_thu = candidate
+                        menu.save()
+                    elif menu.dn_thu == dish:
+                        menu.dn_thu = candidate
+                        menu.save()
+
+                    elif menu.br_fri == dish:
+                        menu.br_fri = candidate
+                        menu.save()
+                    elif menu.lu_fri == dish:
+                        menu.lu_fri = candidate
+                        menu.save()
+                    elif menu.dn_fri == dish:
+                        menu.dn_fri = candidate
+                        menu.save()
+
+                    elif menu.br_sat == dish:
+                        menu.br_sat = candidate
+                        menu.save()
+                    elif menu.lu_sat == dish:
+                        menu.lu_sat = candidate
+                        menu.save()
+                    elif menu.dn_sat == dish:
+                        menu.dn_sat = candidate
+                        menu.save()
+
+                    elif menu.br_sun == dish:
+                        menu.br_sun = candidate
+                        menu.save()
+                    elif menu.lu_sun == dish:
+                        menu.lu_sun = candidate
+                        menu.save()
+                    elif menu.dn_sun == dish:
+                        menu.dn_sun = candidate
+                        menu.save()
+
+                    return Response([MenuDetailSerializer(menu, many=False, context={"request": request}).data])
+                else:
+                    return Response({"error": "Не получилось заменить блюдо. Скорее всего нет подходящих аналогов."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            else:
+                return Response({"error": "Недостаточно подходящих блюд для замены."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        else:
+            return Response({"error": "Этого блюда нет в вашем текущем меню."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class DeleteMenuView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request, *args, **kwargs):
+        menu = get_object_or_404(Menu, datestart=get_monday(), owner=self.request.user)
+        menu.delete()
+        return Response({"message": "Меню удалено!"})
+
